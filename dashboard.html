@@ -1,0 +1,1489 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="智慧茶园实时监控大屏 · 三区微气候、综合气象趋势与霜冻告警">
+<title>实时监控大屏 · 智慧茶园</title>
+<script>
+  try{
+    if(window.self!==window.top) document.documentElement.classList.add('is-embedded');
+  }catch(err){
+    document.documentElement.classList.add('is-embedded');
+  }
+</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" media="print" onload="this.media='all'">
+<script async src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js" onload="window.__dashChartsReady && window.__dashChartsReady()" onerror="window.__dashEChartsFailed = true"></script>
+<style>
+  :root{
+    --cream:#f8f9f0;
+    --paper:rgba(255,255,252,.7);
+    --mint-50:#f3faf0;
+    --mint-100:#e8f5e9;
+    --mint-200:#d6ebd8;
+    --mint-300:#a5d6a7;
+    --leaf:#4a9462;
+    --teal:#5eb4b2;
+    --forest:#205b3b;
+    --forest-deep:#123c27;
+    --ink:#173c28;
+    --muted:#647d6e;
+    --line:rgba(255,255,255,.78);
+    --hairline:rgba(31,76,47,.1);
+    --danger:#bc6152;
+    --amber:#b48439;
+    --safe:#4a9364;
+    --glass-bg:linear-gradient(148deg,rgba(255,255,252,.8) 0%,rgba(246,253,244,.56) 52%,rgba(229,246,235,.48) 100%);
+    --glass-border:rgba(255,255,255,.9);
+    --glass-shadow:0 20px 50px rgba(34,79,50,.09),0 3px 9px rgba(34,79,50,.03),0 0 0 1px rgba(169,222,181,.22),inset 0 1px 0 rgba(255,255,255,.92),0 0 30px rgba(136,204,157,.1);
+    --font-body:"Avenir Next","Nunito","PingFang SC","Hiragino Sans GB","Microsoft YaHei UI","Microsoft YaHei",sans-serif;
+    --font-display:"Avenir Next","Futura","PingFang SC","Hiragino Sans GB","Microsoft YaHei UI","Microsoft YaHei",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:var(--font-body);color:var(--ink);min-height:100vh;min-height:100dvh;overflow:hidden;
+    position:relative;isolation:isolate;opacity:0;transition:opacity .4s ease;
+    -webkit-font-smoothing:antialiased;
+    background:
+      radial-gradient(980px 680px at 4% -8%,rgba(208,239,215,.9),transparent 66%),
+      radial-gradient(820px 600px at 101% 3%,rgba(255,247,219,.55),transparent 64%),
+      radial-gradient(760px 560px at 72% 108%,rgba(196,232,223,.4),transparent 68%),
+      linear-gradient(138deg,#f4f9ee 0%,#f8f8ef 46%,#e9f5e7 100%);
+  }
+  body.is-ready{opacity:1}
+  button{font:inherit;cursor:pointer}
+  a{color:inherit;text-decoration:none}
+  ::selection{background:#c0e3c5;color:#12351f}
+  :focus-visible{outline:3px solid rgba(61,126,82,.34);outline-offset:3px}
+
+  /* ---------- 淡绿微光背景 ---------- */
+  .nature-bg{position:fixed;inset:0;z-index:-3;overflow:hidden;pointer-events:none}
+  .nature-bg .orb{position:absolute;border-radius:50%;filter:blur(2px);opacity:.6}
+  .orb.one{width:420px;height:420px;left:-150px;top:12%;background:radial-gradient(circle,rgba(178,222,184,.34),transparent 68%)}
+  .orb.two{width:500px;height:500px;right:-180px;top:-160px;background:radial-gradient(circle,rgba(252,237,191,.3),transparent 68%)}
+  .orb.three{width:460px;height:460px;left:42%;bottom:-260px;background:radial-gradient(circle,rgba(172,224,214,.27),transparent 68%)}
+  .nature-bg .contour{position:absolute;inset:0;width:100%;height:100%;opacity:.62}
+  .nature-bg .sparkles{
+    position:absolute;inset:0;opacity:.65;background-repeat:no-repeat;
+    background-image:
+      radial-gradient(1.4px 1.4px at 12% 22%,rgba(84,151,107,.46),transparent 100%),
+      radial-gradient(1px 1px at 29% 67%,rgba(99,166,120,.34),transparent 100%),
+      radial-gradient(1.7px 1.7px at 43% 16%,rgba(214,183,105,.4),transparent 100%),
+      radial-gradient(1px 1px at 57% 39%,rgba(89,160,115,.36),transparent 100%),
+      radial-gradient(1.4px 1.4px at 72% 12%,rgba(104,173,126,.34),transparent 100%),
+      radial-gradient(1px 1px at 84% 31%,rgba(218,188,119,.4),transparent 100%),
+      radial-gradient(1.5px 1.5px at 92% 58%,rgba(87,157,113,.3),transparent 100%),
+      radial-gradient(1px 1px at 18% 82%,rgba(94,164,117,.3),transparent 100%),
+      radial-gradient(1.3px 1.3px at 67% 78%,rgba(201,176,112,.32),transparent 100%);
+  }
+  .nature-bg .grain{
+    position:absolute;inset:0;opacity:.28;
+    background-image:radial-gradient(rgba(43,91,58,.19) .55px,transparent .55px);
+    background-size:5px 5px;
+    mask-image:linear-gradient(118deg,#000,transparent 45%,#000);
+    -webkit-mask-image:linear-gradient(118deg,#000,transparent 45%,#000);
+  }
+  .floating-leaf{position:fixed;z-index:-1;pointer-events:none;opacity:.2;animation:leafFloat 15s ease-in-out infinite}
+  .floating-leaf svg{display:block;width:100%;height:auto}
+  .floating-leaf.one{width:58px;right:2.4%;top:12%;transform:rotate(24deg)}
+  .floating-leaf.two{width:36px;left:1.2%;bottom:13%;transform:rotate(-34deg);animation-delay:-7s;opacity:.14}
+  @keyframes leafFloat{0%,100%{translate:0 0;rotate:0deg}40%{translate:7px -12px;rotate:4deg}70%{translate:-5px 7px;rotate:-3deg}}
+
+  .dash{width:min(1640px,100%);height:100dvh;min-height:680px;margin:0 auto;padding:13px 16px 15px;display:flex;flex-direction:column;gap:11px;position:relative;z-index:1}
+  html.is-embedded .dash{padding-top:9px;padding-bottom:10px}
+  html.is-embedded .dash-head{display:none}
+  html.is-embedded .dash-grid{flex:1;min-height:0}
+  @keyframes cardIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+  /* ---------- 顶部 ---------- */
+  .dash-head{flex:0 0 auto;min-height:52px;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:0 4px;animation:cardIn .45s ease both}
+  .dash-title{display:flex;align-items:center;gap:11px;min-width:0}
+  .dash-mark{
+    width:38px;height:38px;flex:0 0 38px;border-radius:12px;display:grid;place-items:center;color:#fff;
+    background:linear-gradient(145deg,#55996b,#265c3c);
+    border:1px solid rgba(255,255,255,.5);box-shadow:0 10px 24px rgba(32,84,52,.2),inset 0 1px 0 rgba(255,255,255,.24);
+  }
+  .dash-mark svg{width:21px;height:21px}
+  .dash-heading{min-width:0}
+  .dash-eyebrow{display:flex;align-items:center;gap:7px;font-size:8px;font-weight:750;letter-spacing:.16em;color:#6d8877;text-transform:uppercase;white-space:nowrap}
+  .dash-eyebrow .live-dot{width:5px;height:5px;border-radius:50%;background:#51a46d;box-shadow:0 0 0 3px rgba(81,164,109,.1);animation:softPulse 2.5s infinite}
+  .dash-title h1{display:flex;align-items:baseline;gap:9px;margin-top:3px;font-family:var(--font-display);font-size:20px;font-weight:760;letter-spacing:-.045em;line-height:1.14;color:var(--forest-deep);white-space:nowrap}
+  .dash-title h1 .edition{font-family:var(--font-body);font-size:6.5px;font-weight:750;letter-spacing:.14em;color:#8ca091;border:1px solid rgba(255,255,255,.8);background:rgba(255,255,252,.45);padding:4px 6px;border-radius:5px;transform:translateY(-2px)}
+  .dash-sub{margin-top:2px;font-size:8px;letter-spacing:.02em;color:#8a9e90;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dash-head-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+  .sync-pill{
+    display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 10px;border-radius:999px;
+    font-size:8px;font-weight:700;letter-spacing:.02em;color:#607a69;background:rgba(255,255,252,.58);
+    border:1px solid rgba(255,255,255,.85);box-shadow:0 7px 18px rgba(38,80,51,.045);white-space:nowrap;
+  }
+  .sync-pill .dot{width:5px;height:5px;border-radius:50%;background:#8da495}
+  .sync-pill.is-live{color:#34724d;background:rgba(247,253,245,.84)}
+  .sync-pill.is-live .dot{background:#51a46e;box-shadow:0 0 0 3px rgba(81,164,110,.1);animation:softPulse 2.5s infinite}
+  .sync-pill.is-demo{color:#34714c;background:rgba(246,253,244,.9);border-color:rgba(162,201,167,.36)}
+  .sync-pill.is-demo .dot{background:#50a56c;box-shadow:0 0 0 3px rgba(80,165,108,.1)}
+  .sync-pill.is-partial{color:#8f7334;background:rgba(255,251,241,.82);border-color:#f1e6cf}
+  .sync-pill.is-partial .dot{background:#c69b4b}
+  @keyframes softPulse{50%{opacity:.5}}
+  .refresh-note{font-size:7.5px;color:#8da092;display:flex;flex-direction:column;align-items:flex-end;gap:2px;line-height:1.2;white-space:nowrap}
+  .refresh-note strong{font-family:var(--font-display);font-size:11px;color:#526d5b;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.03em}
+  .refresh-btn{
+    width:31px;height:31px;border-radius:9px;display:grid;place-items:center;color:#627c6b;
+    background:rgba(255,255,252,.62);border:1px solid rgba(255,255,255,.88);
+    box-shadow:0 7px 18px rgba(38,80,51,.045);transition:.2s;
+  }
+  .refresh-btn svg{width:14px;height:14px}
+  .refresh-btn:hover{background:#fff;color:#2d6846;transform:translateY(-1px)}
+  .refresh-btn.is-loading svg{animation:spin .9s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ---------- 布局 ---------- */
+  .dash-grid{flex:1;min-height:0;display:grid;grid-template-columns:minmax(256px,.86fr) minmax(390px,1.42fr) minmax(254px,.82fr);gap:11px}
+  .col{min-width:0;min-height:0;display:flex;flex-direction:column;gap:11px}
+  .glass-card{
+    position:relative;min-height:0;padding:14px 15px 12px;border-radius:24px;overflow:hidden;
+    background:var(--glass-bg);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow);
+    backdrop-filter:blur(22px) saturate(118%);-webkit-backdrop-filter:blur(22px) saturate(118%);
+    animation:cardIn .6s cubic-bezier(.2,.8,.3,1) both;
+  }
+  .glass-card::before{
+    content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+    background:linear-gradient(122deg,rgba(255,255,255,.4),transparent 30%,transparent 72%,rgba(191,231,200,.08));
+  }
+  .glass-card::after{
+    content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.2),0 0 30px rgba(134,201,155,.06);
+  }
+  .col-left .glass-card{animation-delay:.03s}
+  .col-center .glass-card:nth-child(1){animation-delay:.08s}
+  .col-center .glass-card:nth-child(2){animation-delay:.14s}
+  .col-right .glass-card:nth-child(1){animation-delay:.11s}
+  .col-right .glass-card:nth-child(2){animation-delay:.17s}
+  .glass-card:hover{box-shadow:0 25px 58px rgba(34,79,50,.11),0 4px 12px rgba(34,79,50,.035),0 0 0 1px rgba(169,222,181,.3),inset 0 1px 0 rgba(255,255,255,.95),0 0 34px rgba(136,204,157,.14)}
+
+  .card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:9px;position:relative;z-index:2;flex-shrink:0}
+  .card-heading{display:flex;align-items:center;gap:8px;min-width:0}
+  .card-icon{
+    width:27px;height:27px;border-radius:8px;display:grid;place-items:center;flex:0 0 27px;
+    background:linear-gradient(145deg,rgba(232,246,230,.95),rgba(211,236,214,.66));
+    border:1px solid rgba(255,255,255,.78);color:#4d8460;box-shadow:inset 0 1px 0 rgba(255,255,255,.8);
+  }
+  .card-icon svg{width:14px;height:14px}
+  .card-heading h2{font-family:var(--font-display);font-size:13px;font-weight:750;color:#294f37;letter-spacing:-.018em;line-height:1.2;white-space:nowrap}
+  .card-heading p{margin-top:2px;font-size:8px;line-height:1.4;color:#8c9f92;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .head-badges{display:flex;align-items:center;gap:5px;flex-shrink:0}
+  .soft-badge{
+    display:inline-flex;align-items:center;gap:4px;height:21px;padding:0 7px;border-radius:6px;
+    font-size:7px;font-weight:700;letter-spacing:.02em;color:#668171;
+    background:rgba(255,255,252,.55);border:1px solid rgba(255,255,255,.8);white-space:nowrap;
+  }
+  .soft-badge .dot{width:4px;height:4px;border-radius:50%;background:#78a389}
+  .api-chip{
+    display:inline-flex;align-items:center;gap:4px;height:20px;padding:0 6px;border-radius:5px;
+    font-size:6.5px;font-weight:700;color:#7b9181;background:rgba(255,255,252,.58);
+    border:1px solid rgba(255,255,255,.8);white-space:nowrap;transition:.25s;
+  }
+  .api-chip i{width:4px;height:4px;border-radius:50%;background:#9eb0a2;font-style:normal}
+  .api-chip.is-live{color:#3e7954;background:rgba(241,250,238,.82);border-color:rgba(207,235,207,.9)}
+  .api-chip.is-live i{background:#55a46e;box-shadow:0 0 0 2px rgba(85,164,110,.09)}
+  .api-chip.is-demo{color:#34714c;background:rgba(246,253,244,.9);border-color:rgba(162,201,167,.36)}
+  .api-chip.is-demo i{background:#50a56c}
+  .api-chip.is-stale{color:#9a7b43;background:#fbf6eb;border-color:#f2e8d5}
+  .api-chip.is-stale i{background:#c5a25d}
+  .api-chip.is-loading i{animation:softPulse 1.5s infinite}
+
+  /* ---------- 左侧地图 ---------- */
+  .map-card{flex:1;display:flex;flex-direction:column;min-height:0;padding-bottom:10px}
+  .map-card .card-head{margin-bottom:7px}
+  .map-shell{
+    position:relative;flex:1;min-height:250px;border-radius:18px;overflow:hidden;
+    background:linear-gradient(150deg,rgba(245,252,241,.55),rgba(221,242,225,.34));
+    border:1px solid rgba(255,255,255,.65);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.32),inset 0 8px 24px rgba(84,139,99,.045);
+  }
+  .map-shell::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;box-shadow:inset 0 0 35px rgba(71,128,88,.08)}
+  .tea-map{display:block;width:100%;height:100%;cursor:crosshair}
+  .zone{transform-box:fill-box;transform-origin:center;transition:transform .38s cubic-bezier(.2,.8,.3,1),opacity .3s ease,filter .3s ease;cursor:pointer;outline:none}
+  .zone:hover{filter:brightness(1.025)}
+  .zone:focus-visible .zone-shape{stroke:#2f6f4b;stroke-width:2.2}
+  .zone.is-active{transform:scale(1.052);filter:drop-shadow(0 6px 18px rgba(44,104,64,.17))}
+  .zone.is-active .zone-shape{stroke:var(--zone-color);stroke-width:2.1}
+  .zone.is-dimmed{opacity:.87}
+  .zone-shape{stroke:rgba(255,255,255,.72);stroke-width:1.5;transition:stroke .3s ease,stroke-width .3s ease}
+  .zone-label-bg{fill:rgba(255,255,252,.68);stroke:rgba(255,255,255,.87);stroke-width:1}
+  .zone-label-text{fill:#557560;font-family:var(--font-body);font-size:10px;font-weight:750;letter-spacing:.03em}
+  .map-marker{pointer-events:none}
+  .marker-pulse{fill:none;stroke:var(--zone-color);stroke-width:1;opacity:.4;animation:markerPulse 3.2s ease-out infinite;transform-box:fill-box;transform-origin:center}
+  .marker-core{fill:rgba(255,255,252,.92);stroke:var(--zone-color);stroke-width:1.6;filter:drop-shadow(0 3px 5px rgba(35,82,51,.14))}
+  .marker-icon{color:var(--zone-color)}
+  .marker-temp{fill:var(--zone-color);font-family:var(--font-display);font-size:11.5px;font-weight:760;letter-spacing:-.02em;paint-order:stroke;stroke:rgba(255,255,255,.86);stroke-width:2.6px}
+  .marker-status{fill:var(--zone-color)}
+  .zone.risk-danger{--zone-color:#bd6355}
+  .zone.risk-warn{--zone-color:#b3863d}
+  .zone.risk-safe{--zone-color:#4b9465}
+  @keyframes markerPulse{0%{transform:scale(.72);opacity:.45}75%,100%{transform:scale(1.45);opacity:0}}
+  .map-hint{
+    position:absolute;left:10px;top:10px;z-index:3;display:flex;align-items:center;gap:5px;
+    padding:5px 7px;border-radius:6px;background:rgba(255,255,252,.62);border:1px solid rgba(255,255,255,.78);
+    color:#7e9384;font-size:6.8px;font-weight:650;backdrop-filter:blur(8px);
+  }
+  .map-hint svg{width:10px;height:10px;color:#76a087}
+  .map-compass{
+    position:absolute;right:10px;top:9px;z-index:3;width:25px;height:25px;border-radius:50%;
+    display:grid;place-items:center;background:rgba(255,255,252,.58);border:1px solid rgba(255,255,255,.8);
+    color:#849886;font-size:6px;font-weight:800;letter-spacing:.05em;backdrop-filter:blur(7px);
+  }
+  .map-compass::before{content:"↑";position:absolute;top:2px;font-size:9px;color:#5e8f72}
+  .map-legend{
+    position:absolute;left:9px;bottom:9px;z-index:3;display:flex;align-items:center;gap:8px;
+    padding:5px 7px;border-radius:6px;background:rgba(255,255,252,.58);border:1px solid rgba(255,255,255,.78);
+    color:#849889;font-size:6.2px;backdrop-filter:blur(8px);
+  }
+  .map-legend span{display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
+  .map-legend i{width:4px;height:4px;border-radius:50%}
+  .map-legend .safe{background:#4b9465}.map-legend .warn{background:#b3863d}.map-legend .danger{background:#bd6355}
+  .map-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 2px 0;color:#95a79a;font-size:7px;flex-shrink:0}
+  .map-foot span{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+  .map-foot .pulse{width:4px;height:4px;border-radius:50%;background:#78ac87}
+
+  .zone-detail{
+    flex:0 0 auto;margin-top:8px;padding:10px 11px 9px;border-radius:15px;position:relative;z-index:2;
+    background:linear-gradient(135deg,rgba(255,255,252,.66),rgba(235,248,237,.44));
+    border:1px solid rgba(255,255,255,.78);box-shadow:inset 0 1px 0 rgba(255,255,255,.8);
+  }
+  .zone-detail.is-flashing{animation:detailFlash .36s ease}
+  @keyframes detailFlash{0%{opacity:.45;transform:translateY(3px)}100%{opacity:1;transform:none}}
+  .zone-detail-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+  .zone-kicker{display:block;font-size:7px;font-weight:750;letter-spacing:.09em;color:#8b9e90;text-transform:uppercase}
+  .zone-detail h3{margin-top:3px;font-family:var(--font-display);font-size:11.5px;font-weight:750;letter-spacing:-.015em;color:#375d46;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .risk-badge{display:inline-flex;align-items:center;height:19px;padding:0 7px;border-radius:5px;font-size:6.5px;font-weight:750;white-space:nowrap;flex-shrink:0;transition:.25s}
+  .risk-badge.safe{color:#3f7b54;background:#e4f3e1;border:1px solid #d7ecd4}
+  .risk-badge.warn{color:#92702e;background:#f8eedb;border:1px solid #f1e4cb}
+  .risk-badge.danger{color:#a64e42;background:#fae9e4;border:1px solid #f6ddd7}
+  .zone-detail-main{display:flex;align-items:flex-end;gap:14px;margin-top:6px}
+  .zone-temp{display:flex;align-items:baseline;gap:3px;line-height:.88}
+  .zone-temp strong{font-family:var(--font-display);font-size:29px;font-weight:760;letter-spacing:-.07em;color:#274f36;font-variant-numeric:tabular-nums}
+  .zone-temp span{font-family:var(--font-display);font-size:11px;font-weight:650;color:#718a7a}
+  .zone-metrics{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
+  .zone-metrics div{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .zone-metrics span{font-size:6.8px;color:#99a99d;white-space:nowrap}
+  .zone-metrics b{font-size:9.2px;color:#4d7059;font-weight:730;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .zone-risk-row{display:flex;align-items:center;gap:7px;margin-top:6px}
+  .zone-risk-row>span{font-size:6.8px;color:#95a699;white-space:nowrap}
+  .zone-risk-row b{font-size:8.2px;color:#587462;font-variant-numeric:tabular-nums}
+  .zone-risk-track{flex:1;height:4px;border-radius:99px;background:rgba(39,85,55,.08);overflow:hidden}
+  .zone-risk-track i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#86bd96,#4c9364);transition:width .55s ease,background .3s ease}
+  .zone-risk-track i.warn{background:linear-gradient(90deg,#e6c67e,#bc8c3e)}
+  .zone-risk-track i.danger{background:linear-gradient(90deg,#e3a396,#bf6152)}
+  .zone-tip{margin-top:5px;font-size:7.2px;line-height:1.5;color:#829588;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* ---------- 中间仪表盘 ---------- */
+  .gauge-card{flex:0 0 252px;display:flex;flex-direction:column;min-height:0}
+  .gauge-card .card-head{margin-bottom:0}
+  .gauge-body{flex:1;min-height:0;display:flex;align-items:center;gap:7px;margin-top:-1px}
+  .gauge-stage{position:relative;flex:1;min-width:0;height:100%;min-height:140px}
+  #riskGauge{width:100%;height:100%}
+  .gauge-center{position:absolute;left:50%;top:54%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:1px;pointer-events:none;text-align:center}
+  .gauge-center .g-label{font-size:6px;font-weight:750;letter-spacing:.16em;color:#91a395;text-transform:uppercase}
+  .gauge-number{display:flex;align-items:baseline;gap:2px;line-height:.92}
+  .gauge-number strong{font-family:var(--font-display);font-size:39px;font-weight:770;letter-spacing:-.075em;color:#2a5b3d;font-variant-numeric:tabular-nums}
+  .gauge-number span{font-size:8px;color:#8ba092}
+  .risk-status{display:inline-flex;align-items:center;gap:4px;height:18px;padding:0 7px;border-radius:5px;font-size:6.5px;font-weight:750;letter-spacing:.02em;transition:.3s}
+  .risk-status .dot{width:4px;height:4px;border-radius:50%}
+  .risk-status.safe{color:#3f7a53;background:#e6f4e2}.risk-status.safe .dot{background:#4b9465}
+  .risk-status.warn{color:#92702e;background:#f8eedb}.risk-status.warn .dot{background:#bd8c3d}
+  .risk-status.danger{color:#a55043;background:#fae9e4}.risk-status.danger .dot{background:#bd6355}
+  .gauge-side{display:flex;flex-direction:column;justify-content:center;gap:8px;flex:0 0 88px;padding-left:8px;border-left:1px solid rgba(36,82,53,.09);align-self:stretch}
+  .gauge-reading{display:flex;flex-direction:column;gap:2px}
+  .gauge-reading span{font-size:6.8px;color:#96a79a;letter-spacing:.02em;white-space:nowrap}
+  .gauge-reading strong{font-family:var(--font-display);font-size:13px;font-weight:730;color:#416b51;letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .gauge-reading strong small{font-size:7px;font-weight:550;color:#819587;margin-left:1px}
+  .gauge-legend{display:flex;align-items:center;justify-content:space-between;gap:6px;padding-top:6px;border-top:1px solid rgba(36,82,53,.075);font-size:6.8px;color:#93a498;flex-shrink:0}
+  .gauge-legend span{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+  .gauge-legend i{width:4px;height:4px;border-radius:50%}
+  .gauge-legend .safe{background:#4b9465}.gauge-legend .warn{background:#bd8c3d}.gauge-legend .danger{background:#bd6355}
+  .gauge-legend b{color:#728a7b;font-weight:750;font-variant-numeric:tabular-nums}
+
+  /* ---------- 中间趋势 ---------- */
+  .trend-card{flex:1;min-height:0;display:flex;flex-direction:column}
+  .trend-card .card-head{margin-bottom:4px}
+  .legend-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0;margin:2px 0 2px 35px;position:relative;z-index:2}
+  .legend-item{display:inline-flex;align-items:center;gap:4px;font-size:7px;color:#8fa094;white-space:nowrap}
+  .legend-item .line{width:13px;height:2px;border-radius:99px}
+  .legend-item .line.solid-temp{background:#3f8c5f}
+  .legend-item .line.solid-humidity{background:#63b4bd}
+  .legend-item .line.dashed-wind{background:none;border-top:1.5px dashed #c79d51;height:0}
+  .legend-item .bar-rain{width:7px;height:7px;border-radius:2px;background:rgba(106,185,195,.55)}
+  .axis-guide{display:flex;align-items:center;justify-content:space-between;gap:9px;flex-shrink:0;margin:-1px 1px 1px 35px;font-size:6.2px;color:#9aab9e;letter-spacing:.02em}
+  .axis-guide span{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+  .axis-guide i{width:4px;height:4px;border-radius:50%;background:#79a889;font-style:normal}
+  .axis-guide span:last-child i{background:#c79b50}
+  .chart-shell{position:relative;flex:1;min-height:0;width:100%}
+  .chart-box{width:100%;height:100%;min-height:150px}
+  .chart-fallback{
+    position:absolute;inset:0;z-index:4;display:none;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+    background:rgba(250,253,247,.6);border-radius:12px;color:#8c9f92;font-size:8px;text-align:center;
+    backdrop-filter:blur(5px);
+  }
+  .chart-fallback.show{display:flex}
+  .chart-fallback svg{width:22px;height:22px;color:#9fbca7}
+  .chart-source{position:absolute;left:0;bottom:-1px;display:none}
+  .chart-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0;padding:3px 1px 0;font-size:6.8px;color:#9aab9e}
+  .chart-foot span{display:inline-flex;align-items:center;gap:4px}
+  .chart-foot .live-dot{width:4px;height:4px;border-radius:50%;background:#66a77c}
+  .chart-foot b{color:#708a79;font-weight:700;font-variant-numeric:tabular-nums}
+
+  /* ---------- 右侧预测 ---------- */
+  .forecast-card{flex:0 0 276px;display:flex;flex-direction:column;min-height:0}
+  .forecast-card .card-head{margin-bottom:4px}
+  .forecast-summary{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0;padding:1px 2px 2px 1px}
+  .forecast-min{display:flex;align-items:baseline;gap:4px}
+  .forecast-min span{font-size:7px;color:#96a79a;white-space:nowrap}
+  .forecast-min strong{font-family:var(--font-display);font-size:20px;font-weight:760;color:#315f42;letter-spacing:-.05em;font-variant-numeric:tabular-nums;line-height:1}
+  .forecast-min small{font-size:7px;color:#84998a}
+  .forecast-alert{display:inline-flex;align-items:center;gap:4px;font-size:7px;font-weight:700;color:#3f7b54;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+  .forecast-alert .dot{width:4px;height:4px;border-radius:50%;background:#549b67;flex-shrink:0}
+  .forecast-alert.warn{color:#a56f2e}.forecast-alert.warn .dot{background:#cf9442}
+  .forecast-alert.danger{color:#a95143}.forecast-alert.danger .dot{background:#c46c5c}
+  .forecast-chart{position:relative;flex:1;min-height:0;margin-top:1px}
+  .forecast-chart .chart-box{min-height:110px}
+  .forecast-card .chart-fallback{font-size:7.5px}
+
+  /* ---------- 告警 ---------- */
+  .alert-card{flex:1;min-height:0;display:flex;flex-direction:column}
+  .alert-card .card-head{margin-bottom:6px}
+  .count-chip{display:inline-flex;align-items:center;gap:4px;height:20px;padding:0 7px;border-radius:5px;background:rgba(255,255,252,.54);border:1px solid rgba(255,255,255,.8);font-size:6.5px;color:#748b7b;white-space:nowrap;font-weight:650}
+  .count-chip b{font-size:8px;color:#426a51;font-weight:750;font-variant-numeric:tabular-nums}
+  .alert-scroll{flex:1;min-height:0;overflow-y:auto;border-radius:11px;border:1px solid rgba(255,255,255,.6);background:rgba(255,255,252,.27);scrollbar-width:thin;scrollbar-color:rgba(75,133,91,.22) transparent}
+  .alert-scroll::-webkit-scrollbar{width:4px}
+  .alert-scroll::-webkit-scrollbar-thumb{background:rgba(75,133,91,.2);border-radius:99px}
+  .alert-table{width:100%;border-collapse:collapse;table-layout:fixed}
+  .alert-table th{
+    position:sticky;top:0;z-index:2;background:rgba(242,250,239,.9);backdrop-filter:blur(8px);
+    font-size:6.8px;font-weight:750;letter-spacing:.08em;color:#8ba092;text-align:left;padding:7px 9px;border-bottom:1px solid rgba(37,81,52,.07);
+  }
+  .alert-table th:nth-child(2){width:67px}.alert-table th:nth-child(3){width:72px}
+  .alert-table td{padding:7px 9px;border-bottom:1px solid rgba(37,81,52,.055);font-size:9px;color:#647d6e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .alert-table tr:last-child td{border-bottom:0}
+  .alert-table tbody tr{transition:background .18s ease}
+  .alert-table tbody tr:hover{background:rgba(228,245,226,.55)}
+  .alert-table tbody tr.is-danger{background:rgba(251,235,231,.5)}
+  .alert-table tbody tr.is-danger:hover{background:rgba(250,228,223,.72)}
+  .alert-table tbody tr.is-danger td{color:#ad5548}
+  .alert-time{display:flex;flex-direction:column;gap:1px}
+  .alert-time strong{font-size:8.2px;font-weight:650;color:#526e5c;font-variant-numeric:tabular-nums}
+  .alert-time span{font-size:6.3px;color:#9aab9d;font-variant-numeric:tabular-nums}
+  .alert-table tr.is-danger .alert-time strong,.alert-table tr.is-danger .alert-time span{color:#ac5e50}
+  .alert-temp{font-family:var(--font-display);font-size:10.2px;font-weight:730;color:#536f5d;font-variant-numeric:tabular-nums}
+  .alert-temp.critical{color:#ba6253}
+  .alert-table tr.is-danger .alert-temp{color:#ac5043}
+  .alert-level{display:inline-flex;align-items:center;gap:3px;padding:3px 5px;border-radius:4px;font-size:6.9px;font-weight:700;white-space:nowrap}
+  .alert-level .dot{width:3px;height:3px;border-radius:50%}
+  .alert-level.high{color:#a44e41;background:#fae9e4}.alert-level.high .dot{background:#c16856}
+  .alert-level.mid{color:#946f2e;background:#f8eedb}.alert-level.mid .dot{background:#c29444}
+  .alert-level.low{color:#3d7952;background:#e7f4e3}.alert-level.low .dot{background:#559d6b}
+  .alert-level.unknown{color:#788c7d;background:#eff3ed}.alert-level.unknown .dot{background:#9aac9f}
+  .alert-empty{display:none;align-items:center;justify-content:center;flex-direction:column;gap:5px;height:100%;min-height:100px;color:#94a699;font-size:7.5px;text-align:center;padding:12px}
+  .alert-empty.show{display:flex}
+  .alert-empty svg{width:22px;height:22px;color:#a6bfab}
+  .alert-foot{display:flex;align-items:center;justify-content:space-between;gap:6px;flex-shrink:0;padding:6px 1px 0;font-size:6.8px;color:#99aa9d}
+  .alert-foot span{display:inline-flex;align-items:center;gap:4px}
+  .alert-foot .dot{width:4px;height:4px;border-radius:50%;background:#a4b5a8}
+  .alert-foot .dot.live{background:#5aa272}
+  .alert-foot .dot.demo{background:#50a56c}
+
+  /* ---------- 工具与响应式 ---------- */
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  .loading-sheen{position:relative;overflow:hidden}
+  .loading-sheen::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);transform:translateX(-100%);animation:sheen 1.8s infinite}
+  @keyframes sheen{to{transform:translateX(100%)}}
+
+  @media (max-width:1180px){
+    .dash-grid{grid-template-columns:minmax(238px,.82fr) minmax(360px,1.32fr) minmax(238px,.8fr);gap:10px}
+    .dash{padding-left:13px;padding-right:13px}
+    .gauge-side{flex-basis:78px;padding-left:6px}
+    .gauge-number strong{font-size:35px}
+  }
+  @media (max-width:980px){
+    body{overflow:auto}
+    .dash{height:auto;min-height:100dvh;padding:13px 14px 18px}
+    .dash-grid{grid-template-columns:minmax(0,1fr) minmax(0,1.28fr);min-height:0}
+    .col-left{grid-column:1 / 2}
+    .col-center{grid-column:2 / 3}
+    .col-right{grid-column:1 / -1;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .map-card{height:620px}
+    .gauge-card{flex-basis:250px}
+    .trend-card{height:359px;flex:0 0 359px}
+    .forecast-card{height:310px}
+    .alert-card{height:350px}
+    .forecast-card .chart-box{min-height:140px}
+    .dash-head{align-items:flex-start}
+    .dash-head-right{gap:7px}
+    .refresh-note{display:none}
+  }
+  @media (max-width:700px){
+    body{overflow:auto}
+    .dash{height:auto;min-height:100dvh;padding:11px 10px 17px;gap:10px}
+    .dash-head{min-height:48px}
+    .dash-mark{width:33px;height:33px;flex-basis:33px;border-radius:10px}
+    .dash-mark svg{width:18px;height:18px}
+    .dash-title{gap:8px}
+    .dash-title h1{font-size:17px;white-space:normal;gap:6px}
+    .dash-title h1 .edition{display:none}
+    .dash-sub{white-space:normal;line-height:1.5;max-width:210px;font-size:7.5px}
+    .dash-eyebrow{font-size:7px;letter-spacing:.1em}
+    .sync-pill{height:27px;font-size:7px;padding:0 8px}
+    .refresh-btn{width:29px;height:29px}
+    .dash-grid{grid-template-columns:1fr}
+    .col-left,.col-center,.col-right{grid-column:1/-1}
+    .col-right{display:flex;flex-direction:column}
+    .map-card{height:auto;min-height:615px}
+    .map-shell{min-height:300px}
+    .gauge-card{flex:0 0 auto;min-height:250px}
+    .trend-card{height:355px;flex:0 0 355px}
+    .forecast-card{flex:0 0 auto;height:300px}
+    .alert-card{flex:0 0 auto;height:340px}
+    .card-heading p{white-space:normal}
+    .gauge-side{flex-basis:82px}
+    .dash-head-right .refresh-note{display:none}
+  }
+  @media (max-width:420px){
+    .dash{padding:9px 8px 15px}
+    .dash-title h1{font-size:16px}
+    .dash-sub{max-width:180px;font-size:7px}
+    .sync-pill{padding:0 7px;font-size:6.5px}
+    .sync-pill span:last-child{max-width:88px;overflow:hidden;text-overflow:ellipsis}
+    .glass-card{border-radius:20px;padding-left:11px;padding-right:11px}
+    .map-shell{min-height:285px}
+    .gauge-side{flex-basis:75px}
+    .gauge-number strong{font-size:34px}
+    .gauge-reading strong{font-size:12px}
+    .legend-row{gap:7px;margin-left:0}
+    .legend-item{font-size:6px}
+    .axis-guide{margin-left:0;font-size:5.8px}
+  }
+  @media (max-height:730px) and (min-width:981px){
+    .dash{min-height:680px;padding-top:9px;padding-bottom:10px}
+    .dash-head{min-height:46px}
+    .dash-title h1{font-size:18px}
+    .dash-grid{gap:9px}
+    .glass-card{padding-top:11px;padding-bottom:10px}
+    .gauge-card{flex-basis:224px}
+    .forecast-card{flex-basis:250px}
+    .map-shell{min-height:235px}
+    .zone-detail{padding:8px 9px 7px}
+    .zone-temp strong{font-size:25px}
+    .card-heading p{display:none}
+    .legend-row{margin-bottom:0}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;scroll-behavior:auto !important}
+  }
+</style>
+</head>
+<body>
+<div class="nature-bg" aria-hidden="true">
+  <div class="orb one"></div>
+  <div class="orb two"></div>
+  <div class="orb three"></div>
+  <svg class="contour" viewBox="0 0 1600 1000" preserveAspectRatio="none">
+    <g fill="none" stroke="#6f9f7d" stroke-width="1" opacity=".13">
+      <path d="M-60 720C160 630 310 730 520 654c197-72 291-202 513-142 205 55 364 174 640 83"/>
+      <path d="M-60 762C160 671 320 768 533 692c205-73 304-198 527-137 205 56 355 174 620 91"/>
+      <path d="M-80 807c232-91 394 2 612-77 196-71 297-184 515-124 207 57 357 169 632 94"/>
+      <path d="M-80 856c237-84 405-1 625-81 194-72 304-171 521-110 203 58 352 159 615 91"/>
+      <path d="M-40 906c247-82 411 9 636-70 194-68 302-146 511-93 197 51 329 142 574 80"/>
+    </g>
+    <g fill="none" stroke="#d7bd7a" stroke-width="1" opacity=".13">
+      <path d="M1110 70c65-52 144-68 215-34 61 29 84 94 48 142-33 43-116 56-171 28-55-28-63-90-31-136"/>
+      <path d="M1180 126c28-27 65-34 95-13 25 18 29 49 10 70-22 24-60 21-83 2-20-17-21-43-2-59"/>
+    </g>
+  </svg>
+  <div class="sparkles"></div>
+  <div class="grain"></div>
+</div>
+<div class="floating-leaf one" aria-hidden="true"><svg viewBox="0 0 100 100"><path d="M86 11C49 13 24 33 18 66c-2 11 1 18 4 23 9 1 17-1 25-5 26-13 36-40 40-69 .2-1-.1-3-1-4Z" fill="#7daa86"/><path d="M21 82C37 55 53 38 75 25" fill="none" stroke="#f7fbf4" stroke-width="2.2" stroke-linecap="round" opacity=".7"/></svg></div>
+<div class="floating-leaf two" aria-hidden="true"><svg viewBox="0 0 100 100"><path d="M86 11C49 13 24 33 18 66c-2 11 1 18 4 23 9 1 17-1 25-5 26-13 36-40 40-69 .2-1-.1-3-1-4Z" fill="#83b18d"/><path d="M21 82C37 55 53 38 75 25" fill="none" stroke="#f7fbf4" stroke-width="2.2" stroke-linecap="round" opacity=".7"/></svg></div>
+
+<main class="dash">
+  <header class="dash-head">
+    <div class="dash-title">
+      <span class="dash-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" fill="none">
+          <path d="M26.4 5.3C17.7 6.2 11.8 11 10.3 19.6c-.3 1.8-.2 3.1.1 4.3 1.4.2 2.7.1 4.1-.2 8.6-1.7 13-7.6 13.9-16.6.1-1-.9-1.9-2-1.8Z" fill="currentColor"/>
+          <path d="M7.4 27.2c2.5-6.7 6.6-11 13.3-14.1" stroke="#f7fbf3" stroke-width="1.8" stroke-linecap="round" opacity=".82"/>
+        </svg>
+      </span>
+      <div class="dash-heading">
+        <div class="dash-eyebrow"><span class="live-dot"></span>TEA-03 · MICROCLIMATE CENTER</div>
+        <h1>实时监控大屏 <span class="edition">LIGHT GLASS</span></h1>
+        <p class="dash-sub">三区微气候 · 综合气象趋势 · 霜冻风险研判</p>
+      </div>
+    </div>
+    <div class="dash-head-right">
+      <span class="sync-pill is-demo" id="syncPill"><span class="dot"></span><span id="syncText">前端演示模式</span></span>
+      <span class="refresh-note"><span>最近刷新</span><strong id="lastRefresh">--:--:--</strong></span>
+      <button type="button" class="refresh-btn" id="refreshAll" title="刷新全部数据" aria-label="刷新全部数据">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M20 7.5v5h-5" stroke-linecap="round" stroke-linejoin="round"/><path d="M19.2 12.5a7.2 7.2 0 1 0-1.4 4.2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="dash-grid">
+    <!-- 左：微气候地图 -->
+    <section class="col col-left" aria-label="左侧微气候地图">
+      <article class="glass-card map-card">
+        <div class="card-head">
+          <div class="card-heading">
+            <span class="card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M3.4 6.8 9 3.8l6 3 5.6-3v13.4l-5.6 3-6-3-5.6 3V6.8Z" stroke-linejoin="round"/><path d="M9 3.9v13.3M15 6.9v13.3" stroke-linecap="round"/></svg></span>
+            <div><h2>茶园微气候地图</h2><p>点击 A / B / C 区块查看详情</p></div>
+          </div>
+          <div class="head-badges"><span class="soft-badge"><span class="dot"></span>模拟分区</span></div>
+        </div>
+
+        <div class="map-shell" id="mapShell">
+          <div class="map-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 3.5v5M2.5 6h5M19 15.5v5M16.5 18h5M14.5 4.5l2 5.2 5.2 2-5.2 2-2 5.2-2-5.2-5.2-2 5.2-2 2-5.2Z" stroke-linecap="round" stroke-linejoin="round"/></svg>点击区块查看数据</div>
+          <div class="map-compass" aria-hidden="true">N</div>
+          <div class="map-legend" aria-hidden="true"><span><i class="safe"></i>安全</span><span><i class="warn"></i>注意</span><span><i class="danger"></i>危险</span></div>
+          <svg class="tea-map" viewBox="0 0 300 430" preserveAspectRatio="xMidYMid meet" role="group" aria-label="茶园微气候交互地图，包含 A、B、C 三个区域">
+            <defs>
+              <linearGradient id="mapSky" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#f7fcf2"/>
+                <stop offset=".48" stop-color="#eff9ea"/>
+                <stop offset="1" stop-color="#e3f3e4"/>
+              </linearGradient>
+              <linearGradient id="zoneA" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#e9ebd0"/>
+                <stop offset=".55" stop-color="#dfe9c8"/>
+                <stop offset="1" stop-color="#cde3c5"/>
+              </linearGradient>
+              <linearGradient id="zoneB" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#dbeccf"/>
+                <stop offset=".58" stop-color="#cae4c2"/>
+                <stop offset="1" stop-color="#b9dabb"/>
+              </linearGradient>
+              <linearGradient id="zoneC" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#d6ece4"/>
+                <stop offset=".55" stop-color="#c6e5df"/>
+                <stop offset="1" stop-color="#b9ddd5"/>
+              </linearGradient>
+              <radialGradient id="pondGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0" stop-color="#cfece8"/>
+                <stop offset="1" stop-color="#aedbd4"/>
+              </radialGradient>
+              <pattern id="teaRows" width="19" height="17" patternUnits="userSpaceOnUse" patternTransform="rotate(-22)">
+                <path d="M0 8.5h19" stroke="rgba(255,255,255,.46)" stroke-width="1.2"/>
+                <path d="M0 13h19" stroke="rgba(87,139,97,.1)" stroke-width=".8"/>
+              </pattern>
+              <pattern id="bushDots" width="18" height="16" patternUnits="userSpaceOnUse">
+                <circle cx="4" cy="5" r="1.7" fill="rgba(82,136,94,.28)"/>
+                <circle cx="12" cy="11" r="1.2" fill="rgba(88,143,100,.22)"/>
+                <circle cx="15" cy="3" r="1" fill="rgba(255,255,255,.4)"/>
+              </pattern>
+              <filter id="zoneShadow" x="-30%" y="-30%" width="160%" height="160%">
+                <feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#3d7450" flood-opacity=".16"/>
+              </filter>
+              <filter id="markerSoft" x="-70%" y="-70%" width="240%" height="240%">
+                <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#3b714d" flood-opacity=".18"/>
+              </filter>
+              <clipPath id="clipA"><path d="M30 265c6-38 40-67 81-64 43 4 72 37 68 80-4 42-36 77-78 78-41 1-73-28-77-60-1-13 1-25 6-34Z"/></clipPath>
+              <clipPath id="clipB"><path d="M187 209c12-27 42-46 73-38 30 8 49 37 43 69-6 34-32 63-65 60-33-2-57-26-60-54-2-15 2-27 9-37Z"/></clipPath>
+              <clipPath id="clipC"><path d="M69 61c20-27 64-35 94-16 30 19 41 54 27 84-15 31-52 47-87 36-33-10-57-39-56-68 1-14 10-27 22-36Z"/></clipPath>
+            </defs>
+
+            <rect width="300" height="430" rx="26" fill="url(#mapSky)"/>
+            <g fill="none" stroke="#78a889" stroke-width=".8" opacity=".18">
+              <path d="M-20 58C35 34 73 75 118 58s75-44 120-20 61 31 91 28"/>
+              <path d="M-24 96C35 67 72 105 119 89s76-40 120-18 60 30 91 25"/>
+              <path d="M-20 384c47-23 84 9 125-2s63-35 108-27 61 25 97 10"/>
+              <path d="M-20 408c47-22 84 10 125-1s65-32 109-23 61 21 97 8"/>
+            </g>
+            <path d="M-10 175c48 3 57-43 94-55 31-10 45 17 37 48-9 36 24 57 56 49 30-8 21-42 50-54 27-11 44 13 32 43-13 34 12 52 42 62" fill="none" stroke="rgba(255,255,252,.76)" stroke-width="10" stroke-linecap="round"/>
+            <path d="M-10 175c48 3 57-43 94-55 31-10 45 17 37 48-9 36 24 57 56 49 30-8 21-42 50-54 27-11 44 13 32 43-13 34 12 52 42 62" fill="none" stroke="rgba(138,174,146,.34)" stroke-width="1" stroke-dasharray="4 7" stroke-linecap="round"/>
+            <path d="M217 12c-11 58 12 80 6 121-6 42-47 63-37 111 5 24 25 37 36 50" fill="none" stroke="rgba(178,220,215,.72)" stroke-width="6" stroke-linecap="round"/>
+            <path d="M190 368c13-15 39-15 55-3s8 33-12 38c-21 5-41-6-45-19-2-6 0-11 2-16Z" fill="url(#pondGlow)" stroke="rgba(255,255,255,.7)" stroke-width="1"/>
+            <path d="M206 372c8-6 21-5 28 1" fill="none" stroke="rgba(255,255,255,.62)" stroke-width="1.2" stroke-linecap="round"/>
+
+            <g class="zone risk-danger is-active" data-zone="A" tabindex="0" role="button" aria-label="A区，谷地茶园，温度 2.1 摄氏度，危险风险">
+              <title>A区 · 谷地茶园 · 危险</title>
+              <path class="zone-shape" d="M30 265c6-38 40-67 81-64 43 4 72 37 68 80-4 42-36 77-78 78-41 1-73-28-77-60-1-13 1-25 6-34Z" fill="url(#zoneA)" filter="url(#zoneShadow)"/>
+              <g clip-path="url(#clipA)">
+                <rect x="20" y="190" width="165" height="180" fill="url(#teaRows)" opacity=".7"/>
+                <rect x="20" y="190" width="165" height="180" fill="url(#bushDots)" opacity=".8"/>
+                <path d="M12 276c38-17 75 7 116-4s52-20 79-10M12 298c38-16 76 7 117-3s54-16 79-7M18 322c35-14 68 5 106-5s50-12 74-4" fill="none" stroke="rgba(255,255,255,.36)" stroke-width="1.2"/>
+                <path d="M27 256c18-21 42-32 74-30" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.6"/>
+              </g>
+              <g class="zone-label" transform="translate(44 217)"><rect class="zone-label-bg" width="42" height="19" rx="6"/><text class="zone-label-text" x="21" y="13" text-anchor="middle">A区</text></g>
+              <g class="map-marker" transform="translate(104 286)">
+                <circle class="marker-pulse" r="25"/>
+                <circle class="marker-core" r="18" filter="url(#markerSoft)"/>
+                <g class="marker-icon" transform="translate(-7 -8)"><path d="M7 12.2V4.5a2.3 2.3 0 0 1 4.6 0v7.7a4 4 0 1 1-4.6 0Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9.3 8.6v5.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></g>
+                <text class="marker-temp" id="markerATemp" y="33" text-anchor="middle">2.1°C</text>
+              </g>
+            </g>
+
+            <g class="zone risk-warn" data-zone="B" tabindex="0" role="button" aria-label="B区，坡地茶园，温度 5.8 摄氏度，注意风险">
+              <title>B区 · 坡地茶园 · 注意</title>
+              <path class="zone-shape" d="M187 209c12-27 42-46 73-38 30 8 49 37 43 69-6 34-32 63-65 60-33-2-57-26-60-54-2-15 2-27 9-37Z" fill="url(#zoneB)" filter="url(#zoneShadow)"/>
+              <g clip-path="url(#clipB)">
+                <rect x="170" y="160" width="150" height="160" fill="url(#teaRows)" opacity=".7"/>
+                <rect x="170" y="160" width="150" height="160" fill="url(#bushDots)" opacity=".8"/>
+                <path d="M168 223c31-13 58 4 91-5s35-11 53-5M166 247c31-12 60 5 94-5s31-8 53-1M170 271c31-11 58 3 89-5s37-4 53 2" fill="none" stroke="rgba(255,255,255,.36)" stroke-width="1.2"/>
+              </g>
+              <g class="zone-label" transform="translate(198 190)"><rect class="zone-label-bg" width="42" height="19" rx="6"/><text class="zone-label-text" x="21" y="13" text-anchor="middle">B区</text></g>
+              <g class="map-marker" transform="translate(242 238)">
+                <circle class="marker-pulse" r="24"/>
+                <circle class="marker-core" r="18" filter="url(#markerSoft)"/>
+                <g class="marker-icon" transform="translate(-7 -8)"><path d="M12.2 3.2c-4.3.4-7.5 2.8-8.2 7.2-.1.8 0 1.4.2 2 .7.1 1.4 0 2.1-.2 4.2-.8 6.4-3.8 6.9-8.1.1-.5-.5-1-1-.9Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M4.8 16.6c1.4-4.4 4.1-7.2 8.1-9.2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></g>
+                <text class="marker-temp" id="markerBTemp" y="32" text-anchor="middle">5.8°C</text>
+              </g>
+            </g>
+
+            <g class="zone risk-safe" data-zone="C" tabindex="0" role="button" aria-label="C区，山脊茶园，温度 8.9 摄氏度，安全">
+              <title>C区 · 山脊茶园 · 安全</title>
+              <path class="zone-shape" d="M69 61c20-27 64-35 94-16 30 19 41 54 27 84-15 31-52 47-87 36-33-10-57-39-56-68 1-14 10-27 22-36Z" fill="url(#zoneC)" filter="url(#zoneShadow)"/>
+              <g clip-path="url(#clipC)">
+                <rect x="35" y="20" width="190" height="170" fill="url(#teaRows)" opacity=".68"/>
+                <rect x="35" y="20" width="190" height="170" fill="url(#bushDots)" opacity=".8"/>
+                <path d="M36 81c47-22 82 7 131-6 25-7 45-11 69-4M36 107c47-21 83 7 132-5 26-7 45-8 69-1M41 134c44-19 79 4 124-7 25-6 47-5 69 2" fill="none" stroke="rgba(255,255,255,.38)" stroke-width="1.2"/>
+              </g>
+              <g class="zone-label" transform="translate(68 36)"><rect class="zone-label-bg" width="42" height="19" rx="6"/><text class="zone-label-text" x="21" y="13" text-anchor="middle">C区</text></g>
+              <g class="map-marker" transform="translate(123 107)">
+                <circle class="marker-pulse" r="24"/>
+                <circle class="marker-core" r="18" filter="url(#markerSoft)"/>
+                <g class="marker-icon" transform="translate(-7 -8)"><path d="M13.7 3.5c-4.6.4-7.9 3-8.6 7.7-.1.8 0 1.5.2 2.1.7.1 1.5 0 2.2-.2 4.4-.8 6.8-4 7.3-8.6.1-.6-.5-1.1-1.1-1Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M5.7 17.5c1.5-4.6 4.4-7.6 8.6-9.7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></g>
+                <text class="marker-temp" id="markerCTemp" y="32" text-anchor="middle">8.9°C</text>
+              </g>
+            </g>
+
+            <g fill="none" stroke-linecap="round" opacity=".5">
+              <path d="M265 326c5-4 11-4 16 0M273 338c4-3 8-3 12 0" stroke="#87b597" stroke-width="1.2"/>
+              <path d="M28 168c3-3 7-3 10 0M34 177c3-3 6-3 9 0" stroke="#8dbd9a" stroke-width="1.1"/>
+            </g>
+            <g fill="#75a785" opacity=".24">
+              <circle cx="272" cy="352" r="7"/><circle cx="283" cy="365" r="5"/><circle cx="20" cy="142" r="5"/><circle cx="27" cy="151" r="4"/>
+            </g>
+            <text x="266" y="407" text-anchor="end" font-family="Avenir Next, PingFang SC, sans-serif" font-size="6" fill="#9caf9f" letter-spacing=".09em">TEA-03 · MICRO MAP</text>
+          </svg>
+        </div>
+
+        <div class="zone-detail" id="zoneDetail" aria-live="polite">
+          <div class="zone-detail-top">
+            <div><span class="zone-kicker" id="detailZone">A区 · 谷地茶园</span><h3 id="detailTitle">低洼谷地 · 冷空气易沉积</h3></div>
+            <span class="risk-badge danger" id="detailRisk">危险</span>
+          </div>
+          <div class="zone-detail-main">
+            <div class="zone-temp"><strong id="detailTemp">2.1</strong><span>℃</span></div>
+            <div class="zone-metrics">
+              <div><span>空气湿度</span><b id="detailHumidity">92%</b></div>
+              <div><span>平均风速</span><b id="detailWind">0.8 m/s</b></div>
+              <div><span>地表温度</span><b id="detailSoil">2.6℃</b></div>
+            </div>
+          </div>
+          <div class="zone-risk-row"><span>风险指数 <b id="zoneRiskValue">82</b></span><div class="zone-risk-track"><i id="zoneRiskBar" class="danger" style="width:82%"></i></div></div>
+          <p class="zone-tip" id="detailTip">建议：凌晨易结霜，提前覆盖幼嫩茶篷，并安排 2:00 后巡园。</p>
+        </div>
+        <div class="map-foot"><span><span class="pulse"></span>分区数据为微气候模拟 · 10s 刷新</span><span>本地 Mock + 分区模拟</span></div>
+      </article>
+    </section>
+
+    <!-- 中：风险 + 综合趋势 -->
+    <section class="col col-center" aria-label="核心数据与趋势">
+      <article class="glass-card gauge-card">
+        <div class="card-head">
+          <div class="card-heading">
+            <span class="card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 3.4a8.6 8.6 0 0 1 8.6 8.6M12 3.4A8.6 8.6 0 0 0 3.4 12M12 20.6v-4M4.4 16.8l2.8-2M19.6 16.8l-2.8-2" stroke-linecap="round"/><circle cx="12" cy="12" r="3.2"/><path d="M12 2v1.4M2 12h1.4M20.6 12H22" stroke-linecap="round"/></svg></span>
+            <div><h2>霜冻风险指数</h2><p>温度 · 湿度 · 风速 · 云量综合研判</p></div>
+          </div>
+          <div class="head-badges"><span class="api-chip is-demo" id="riskSource"><i></i><span>本地 Mock</span></span></div>
+        </div>
+        <div class="gauge-body">
+          <div class="gauge-stage">
+            <div id="riskGauge" role="img" aria-label="霜冻风险仪表盘"></div>
+            <div class="gauge-center">
+              <span class="g-label">FROST RISK</span>
+              <div class="gauge-number"><strong id="riskValue">--</strong><span>/100</span></div>
+              <span class="risk-status safe" id="riskStatus"><span class="dot"></span>研判中</span>
+            </div>
+          </div>
+          <div class="gauge-side">
+            <div class="gauge-reading"><span>实况温度</span><strong id="gaugeTemp">--<small>℃</small></strong></div>
+            <div class="gauge-reading"><span>空气湿度</span><strong id="gaugeHumidity">--<small>%</small></strong></div>
+            <div class="gauge-reading"><span>霜冻临界</span><strong>3.0<small>℃</small></strong></div>
+          </div>
+        </div>
+        <div class="gauge-legend" aria-hidden="true">
+          <span><i class="safe"></i>安全 <b>0–34</b></span><span><i class="warn"></i>注意 <b>35–64</b></span><span><i class="danger"></i>危险 <b>65–100</b></span>
+        </div>
+      </article>
+
+      <article class="glass-card trend-card">
+        <div class="card-head">
+          <div class="card-heading">
+            <span class="card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3.5 17.4 8.8 11l3.7 3.4L20.5 6" stroke-linecap="round" stroke-linejoin="round"/><path d="M14.8 6h5.7v5.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <div><h2>综合气象趋势</h2><p>近 15 次观测 · 每 10 秒自动刷新</p></div>
+          </div>
+          <div class="head-badges"><span class="api-chip is-demo" id="weatherSource"><i></i><span>本地 Mock</span></span></div>
+        </div>
+        <div class="legend-row" aria-hidden="true">
+          <span class="legend-item"><span class="line solid-temp"></span>温度 ℃</span>
+          <span class="legend-item"><span class="line solid-humidity"></span>湿度 %</span>
+          <span class="legend-item"><span class="line dashed-wind"></span>风速 km/h</span>
+          <span class="legend-item"><span class="bar-rain"></span>降水 mm</span>
+        </div>
+        <div class="axis-guide" aria-hidden="true"><span><i></i>左轴 · 温度 / 湿度</span><span><i></i>右轴 · 风速 / 降水</span></div>
+        <div class="chart-shell">
+          <div id="trendChart" class="chart-box" role="img" aria-label="温度、湿度、风速与降水综合双 Y 轴趋势图"></div>
+          <div class="chart-fallback" id="trendFallback"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3.5 17.4 8.8 11l3.7 3.4L20.5 6"/><path d="M14.8 6h5.7v5.7" stroke-linecap="round" stroke-linejoin="round"/></svg><span>图表正在载入，请检查网络后刷新</span></div>
+        </div>
+        <div class="chart-foot"><span><i class="live-dot"></i>数据源 · 本地 Mock</span><span>更新于 <b id="weatherUpdate">--:--</b></span></div>
+      </article>
+    </section>
+
+    <!-- 右：预测 + 告警 -->
+    <section class="col col-right" aria-label="预测与告警">
+      <article class="glass-card forecast-card">
+        <div class="card-head">
+          <div class="card-heading">
+            <span class="card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 16.5c2.7-5.3 5.4-7.9 8.1-7.9s5.4 2.6 8.1 7.9" stroke-linecap="round"/><path d="M4.7 19.4h14.6M7 12.2V8.8M12 9.2V5.6M17 12.2V8.8" stroke-linecap="round"/></svg></span>
+            <div><h2>未来 12h 气象预测</h2><p>气温走势 · 霜冻线提醒</p></div>
+          </div>
+          <div class="head-badges"><span class="soft-badge">12H</span><span class="api-chip is-demo" id="forecastSource"><i></i><span>本地 Mock</span></span></div>
+        </div>
+        <div class="forecast-summary">
+          <div class="forecast-min"><span>12h 最低温</span><strong id="forecastMin">--</strong><small>℃</small></div>
+          <span class="forecast-alert" id="forecastAlert"><span class="dot"></span>读取中</span>
+        </div>
+        <div class="forecast-chart">
+          <div id="forecastChart" class="chart-box" role="img" aria-label="未来十二小时气温预测折线图"></div>
+          <div class="chart-fallback" id="forecastFallback"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3.5 18h17M5 14l4-5 3 3 7-8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>预测图正在载入…</span></div>
+        </div>
+      </article>
+
+      <article class="glass-card alert-card">
+        <div class="card-head">
+          <div class="card-heading">
+            <span class="card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M18.1 9.6a6.1 6.1 0 1 0-12.2 0c0 7.1-2.5 7.1-2.5 8.4h17.2c0-1.3-2.5-1.3-2.5-8.4Z" stroke-linejoin="round"/><path d="M9.8 21c.4 1 1.2 1.5 2.2 1.5s1.8-.5 2.2-1.5" stroke-linecap="round"/></svg></span>
+            <div><h2>霜冻告警列表</h2><p>按最近时间倒序 · 异常等级标红</p></div>
+          </div>
+          <div class="head-badges"><span class="count-chip">共 <b id="alertCount">--</b> 条</span></div>
+        </div>
+        <div class="alert-scroll" id="alertScroll">
+          <table class="alert-table" aria-label="霜冻告警列表">
+            <thead><tr><th scope="col">告警时间</th><th scope="col">最低温</th><th scope="col">等级</th></tr></thead>
+            <tbody id="alertBody">
+              <tr><td colspan="3" style="color:#99aa9d">正在读取告警记录…</td></tr>
+            </tbody>
+          </table>
+          <div class="alert-empty" id="alertEmpty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4.5 7.5h15v12h-15z"/><path d="M8 4.5v4M16 4.5v4M8 12h8" stroke-linecap="round"/></svg><span>当前没有霜冻告警记录</span></div>
+        </div>
+        <div class="alert-foot"><span><i class="dot demo" id="alertDot"></i><span id="alertSourceText">数据源 · 本地 Mock</span></span><span>自动刷新 45s</span></div>
+      </article>
+    </section>
+  </div>
+</main>
+<div class="sr-only" id="liveAnnounce" aria-live="polite"></div>
+
+<script>
+(function(){
+  'use strict';
+
+  var AUTH_KEY = 'tea_user';
+  var NAME_PREFIX = 'tea_auth:';
+  var state = {
+    weather:null, risk:null, forecast:null, alerts:null,
+    sources:{weather:'loading',risk:'loading',forecast:'loading',alerts:'loading'},
+    fetching:{weather:false,risk:false,forecast:false,alerts:false},
+    charts:{gauge:null,trend:null,forecast:null},
+    chartReady:false,
+    selectedZone:'A',
+    zones:{},
+    refreshing:false,
+    timers:[],
+    lastWeatherDate:null
+  };
+  var MONTH_MAP = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+  var WEEKDAYS = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+
+  /* ---------- 登录拦截 ---------- */
+  function readLocalUser(){
+    try{
+      var raw=localStorage.getItem(AUTH_KEY);
+      if(!raw) return null;
+      var user=JSON.parse(raw);
+      return user && user.username ? user : null;
+    }catch(err){return null;}
+  }
+  function readNameUser(){
+    try{
+      var raw=window.name||'';
+      if(raw.indexOf(NAME_PREFIX)!==0) return null;
+      var user=JSON.parse(decodeURIComponent(raw.slice(NAME_PREFIX.length)));
+      return user && user.username ? user : null;
+    }catch(err){return null;}
+  }
+  var embedded=false;
+  try{embedded=window.self!==window.top;}catch(err){embedded=true;}
+  var currentUser=readLocalUser()||readNameUser();
+  if(!currentUser && !embedded){
+    window.location.replace('index.html');
+    return;
+  }
+  if(currentUser){
+    try{localStorage.setItem(AUTH_KEY, JSON.stringify(currentUser));}catch(err){}
+  }
+  window.addEventListener('message', function(event){
+    var data=event&&event.data;
+    if(data && data.type==='tea:auth' && data.user && data.user.username){
+      try{localStorage.setItem(AUTH_KEY, JSON.stringify(data.user));}catch(err){}
+    }
+  });
+  document.body.classList.add('is-ready');
+
+  /* ---------- 工具 ---------- */
+  function pad(n){return String(n).padStart(2,'0');}
+  function clamp(value,min,max){return Math.min(max,Math.max(min,value));}
+  function num(value,fallback){
+    var n=Number(value);
+    return Number.isFinite(n)?n:fallback;
+  }
+  function round1(value){return Math.round(value*10)/10;}
+  function timeHM(date){return date?pad(date.getHours())+':'+pad(date.getMinutes()):'--:--';}
+  function timeHMS(date){return date?pad(date.getHours())+':'+pad(date.getMinutes())+':'+pad(date.getSeconds()):'--:--:--';}
+  function monthDay(date){return date?(pad(date.getMonth()+1)+'-'+pad(date.getDate())):'--';}
+  function escapeHtml(value){
+    return String(value==null?'':value).replace(/[&<>"']/g,function(ch){
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[ch];
+    });
+  }
+  function parseDate(value){
+    if(!value) return null;
+    if(value instanceof Date) return isNaN(value.getTime())?null:value;
+    var text=String(value).trim();
+    var rfc=text.match(/^[A-Za-z]{3},\s+(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})\s+(\d{2}):(\d{2}):(\d{2})\s+GMT$/i);
+    if(rfc){
+      var key=rfc[2].slice(0,1).toUpperCase()+rfc[2].slice(1,3).toLowerCase();
+      if(MONTH_MAP[key]!=null){
+        var local=new Date(Number(rfc[3]),MONTH_MAP[key],Number(rfc[1]),Number(rfc[4]),Number(rfc[5]),Number(rfc[6]));
+        if(!isNaN(local.getTime())) return local;
+      }
+    }
+    var date=new Date(text.replace(' ','T'));
+    if(!isNaN(date.getTime())) return date;
+    date=new Date(text);
+    return isNaN(date.getTime())?null:date;
+  }
+  function announce(text){
+    var node=document.getElementById('liveAnnounce');
+    if(node) node.textContent=text;
+  }
+
+  /* ---------- 图表准备 ---------- */
+  function hideChartFallback(){
+    ['trendFallback','forecastFallback'].forEach(function(id){
+      var node=document.getElementById(id);
+      if(node) node.classList.remove('show');
+    });
+  }
+  function showChartFallback(){
+    ['trendFallback','forecastFallback'].forEach(function(id){
+      var node=document.getElementById(id);
+      if(node) node.classList.add('show');
+    });
+  }
+  function initCharts(){
+    if(state.chartReady) return true;
+    if(!window.echarts) return false;
+    try{
+      state.charts.gauge=echarts.init(document.getElementById('riskGauge'),null,{renderer:'canvas'});
+      state.charts.trend=echarts.init(document.getElementById('trendChart'),null,{renderer:'canvas'});
+      state.charts.forecast=echarts.init(document.getElementById('forecastChart'),null,{renderer:'canvas'});
+      state.chartReady=true;
+      hideChartFallback();
+      renderAllCharts();
+      setTimeout(function(){resizeCharts();},120);
+      return true;
+    }catch(err){
+      return false;
+    }
+  }
+  window.__dashChartsReady=function(){initCharts();};
+  if(window.echarts) initCharts();
+  var chartTries=0;
+  var chartPoll=setInterval(function(){
+    if(initCharts() || chartTries++>28){
+      clearInterval(chartPoll);
+      if(!state.chartReady) showChartFallback();
+    }
+  },300);
+  var resizeTimer=null;
+  function resizeCharts(){
+    if(!state.chartReady) return;
+    ['gauge','trend','forecast'].forEach(function(key){
+      if(state.charts[key] && !state.charts[key].isDisposed()) state.charts[key].resize();
+    });
+  }
+  window.addEventListener('resize',function(){
+    clearTimeout(resizeTimer);
+    resizeTimer=setTimeout(resizeCharts,120);
+  });
+
+  /* ---------- 本地 Mock 数据源（无后端请求） ---------- */
+  function unwrapList(payload){
+    if(Array.isArray(payload)) return payload;
+    if(payload && Array.isArray(payload.data)) return payload.data;
+    if(payload && payload.data && Array.isArray(payload.data.list)) return payload.data.list;
+    if(payload && Array.isArray(payload.list)) return payload.list;
+    return [];
+  }
+  function setSource(key,mode,label){
+    state.sources[key]=mode;
+    var map={weather:'weatherSource',risk:'riskSource',forecast:'forecastSource',alerts:'alertSource'};
+    var node=document.getElementById(map[key]);
+    if(node){
+      node.classList.remove('is-live','is-demo','is-stale','is-loading');
+      node.classList.add('is-'+mode);
+      var span=node.querySelector('span:last-child');
+      if(span) span.textContent=label;
+    }
+    updateSyncPill();
+  }
+  function updateSyncPill(){
+    var modes=Object.keys(state.sources).map(function(k){return state.sources[k];});
+    var loading=modes.some(function(m){return m==='loading';});
+    var pill=document.getElementById('syncPill');
+    var text=document.getElementById('syncText');
+    if(!pill||!text) return;
+    pill.classList.remove('is-live','is-partial');
+    if(loading){
+      pill.classList.add('is-demo');
+      text.textContent='前端演示模式';
+      return;
+    }
+    pill.classList.add('is-demo');
+    text.textContent='前端演示模式 · 10s 模拟刷新';
+  }
+  function markLastRefresh(){
+    var now=new Date();
+    var node=document.getElementById('lastRefresh');
+    if(node) node.textContent=timeHMS(now);
+  }
+  function setLoading(key,loading){state.fetching[key]=loading;}
+
+  /* ---------- 天气 ---------- */
+  function normalizeWeather(payload){
+    var rows=unwrapList(payload).map(function(item){
+      var date=parseDate(item.record_time||item.time||item.datetime||item.created_at);
+      if(!date) return null;
+      var temp=num(item.temperature,num(item.temp,NaN));
+      var humidity=num(item.humidity,num(item.relative_humidity,NaN));
+      var wind=num(item.wind_speed,num(item.wind,NaN));
+      var rain=num(item.precipitation,num(item.rain,0));
+      return {
+        date:date,
+        timeLabel:timeHM(date),
+        temperature:Number.isFinite(temp)?temp:null,
+        humidity:Number.isFinite(humidity)?humidity:null,
+        wind:Number.isFinite(wind)?wind:null,
+        rain:Number.isFinite(rain)?rain:0,
+        cloud:num(item.cloud_cover,num(item.cloud,NaN))
+      };
+    }).filter(Boolean);
+    rows.sort(function(a,b){return a.date-b.date;});
+    return rows.slice(-15);
+  }
+  function buildDemoWeather(){
+    var now=new Date();
+    now.setSeconds(0,0);
+    var temps=[13.8,13.2,12.7,12.1,11.6,11.2,10.8,10.4,10.0,9.7,9.4,9.2,9.0,8.7,8.4];
+    var humidity=[64,66,68,70,71,73,74,76,78,79,80,81,81,82,82];
+    var wind=[4.6,4.4,4.1,3.9,3.7,3.6,3.5,3.3,3.1,3.0,2.9,2.8,2.7,2.6,2.6];
+    var rain=[0,0,0,0,0.1,0.2,0.1,0,0,0,0,0,0,0,0];
+    return temps.map(function(temp,i){
+      var date=new Date(now.getTime()-(14-i)*10*60*1000);
+      return {date:date,timeLabel:timeHM(date),temperature:temp,humidity:humidity[i],wind:wind[i],rain:rain[i],cloud:24+i};
+    });
+  }
+  function latestWeather(){
+    return state.weather && state.weather.length ? state.weather[state.weather.length-1] : null;
+  }
+  function loadWeather(){
+    state.weather=buildDemoWeather();
+    state.lastWeatherDate=state.weather[state.weather.length-1].date;
+    setSource('weather','demo','本地 Mock');
+    renderWeather();
+    markLastRefresh();
+    return Promise.resolve(true);
+  }
+  function renderWeather(){
+    var latest=latestWeather();
+    if(!latest) return;
+    var tempNode=document.getElementById('gaugeTemp');
+    if(tempNode && state.risk==null) tempNode.innerHTML=round1(latest.temperature)+'<small>℃</small>';
+    var humidityNode=document.getElementById('gaugeHumidity');
+    if(humidityNode) humidityNode.innerHTML=cappedPercent(latest.humidity)+'<small>%</small>';
+    var updateNode=document.getElementById('weatherUpdate');
+    if(updateNode) updateNode.textContent=timeHM(latest.date);
+    if(state.risk && state.risk.temp!=null){
+      /* 风险接口有温度时优先显示；湿度仍来自气象数据 */
+    }
+    renderTrendChart();
+  }
+  function cappedPercent(value){
+    return value==null?'--':Math.round(clamp(value,0,100));
+  }
+
+  /* ---------- 风险 ---------- */
+  function normalizeRisk(payload){
+    if(!payload) return null;
+    var data=payload.data && typeof payload.data==='object' && !Array.isArray(payload.data)?payload.data:payload;
+    var risk=num(data.risk,num(data.risk_index,num(data.score,NaN)));
+    var temp=num(data.temp,num(data.temperature,NaN));
+    if(!Number.isFinite(risk) && !Number.isFinite(temp)) return null;
+    return {
+      risk:Number.isFinite(risk)?clamp(Math.round(risk),0,100):null,
+      temp:Number.isFinite(temp)?temp:null
+    };
+  }
+  function loadRisk(){
+    var latest=latestWeather();
+    state.risk={risk:45,temp:latest?latest.temperature:8.4};
+    setSource('risk','demo','本地 Mock');
+    renderRisk();
+    markLastRefresh();
+    return Promise.resolve(true);
+  }
+  function riskProfile(risk){
+    if(risk>=65) return {key:'danger',label:'危险',text:'建议立即启动防冻措施'};
+    if(risk>=35) return {key:'warn',label:'注意',text:'关注凌晨温度变化'};
+    return {key:'safe',label:'低风险',text:'茶园状态平稳'};
+  }
+  function renderRisk(){
+    if(!state.risk) return;
+    var risk=state.risk.risk==null?0:state.risk.risk;
+    var profile=riskProfile(risk);
+    var valueNode=document.getElementById('riskValue');
+    if(valueNode) valueNode.textContent=String(risk);
+    var status=document.getElementById('riskStatus');
+    if(status){
+      status.className='risk-status '+profile.key;
+      status.innerHTML='<span class="dot"></span>'+escapeHtml(profile.label);
+    }
+    var tempNode=document.getElementById('gaugeTemp');
+    if(tempNode){
+      var t=state.risk.temp!=null?state.risk.temp:(latestWeather()?latestWeather().temperature:null);
+      tempNode.innerHTML=(t==null?'--':round1(t))+'<small>℃</small>';
+    }
+    var humidityNode=document.getElementById('gaugeHumidity');
+    if(humidityNode){
+      var latest=latestWeather();
+      humidityNode.innerHTML=(latest?cappedPercent(latest.humidity):'--')+'<small>%</small>';
+    }
+    renderGaugeChart();
+    announce('霜冻风险指数更新为 '+risk+'，'+profile.label);
+  }
+
+  /* ---------- 预测 ---------- */
+  function normalizeForecast(payload){
+    var rows=unwrapList(payload).map(function(item){
+      var rawTime=item.time||item.datetime||item.forecast_time;
+      var text=String(rawTime==null?'':rawTime).trim();
+      var shortMatch=text.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+      var date=shortMatch?null:parseDate(rawTime);
+      var label=shortMatch?pad(Number(shortMatch[1]))+':'+shortMatch[2]:(date?timeHM(date):'');
+      var temp=num(item.temperature,num(item.temp,NaN));
+      if(!label || !Number.isFinite(temp)) return null;
+      return {date:date,timeLabel:label,temperature:temp,risk:num(item.risk,null)};
+    }).filter(Boolean);
+    if(rows.every(function(row){return !!row.date;})){
+      rows.sort(function(a,b){return a.date-b.date;});
+    }
+    return rows.slice(0,12);
+  }
+  function buildDemoForecast(){
+    var now=new Date();
+    now.setMinutes(0,0,0);
+    var temps=[8.4,7.9,7.3,6.6,5.8,4.9,4.1,3.5,3.0,2.7,2.5,2.7];
+    return temps.map(function(temp,i){
+      var date=new Date(now.getTime()+(i+1)*60*60*1000);
+      return {date:date,timeLabel:timeHM(date),temperature:temp,risk:temp<3?74:temp<6?48:24};
+    });
+  }
+  function loadForecast(){
+    state.forecast=buildDemoForecast();
+    setSource('forecast','demo','本地 Mock');
+    renderForecast();
+    markLastRefresh();
+    return Promise.resolve(true);
+  }
+  function renderForecast(){
+    var rows=state.forecast||[];
+    if(!rows.length){return;}
+    var temps=rows.map(function(r){return r.temperature;});
+    var min=Math.min.apply(null,temps);
+    var minNode=document.getElementById('forecastMin');
+    if(minNode) minNode.textContent=min.toFixed(1);
+    var alert=document.getElementById('forecastAlert');
+    if(alert){
+      alert.className='forecast-alert '+(min<3?'danger':min<6?'warn':'');
+      alert.innerHTML='<span class="dot"></span>'+(min<3?'存在霜冻风险窗口':min<6?'凌晨气温偏低':'未来 12h 较平稳');
+    }
+    renderForecastChart();
+  }
+
+  /* ---------- 告警 ---------- */
+  function levelInfo(raw){
+    var text=String(raw==null?'':raw).trim();
+    var numeric=Number(text);
+    if(/严重|重度|高危|高风险|红色|危险|特重/.test(text)||(Number.isFinite(numeric)&&numeric>=3)) return {key:'high',label:/^\d+$/.test(text)||!text?'高风险':text};
+    if(/中度|中危|中风险|橙色|黄色|注意/.test(text)||(Number.isFinite(numeric)&&numeric===2)) return {key:'mid',label:/^\d+$/.test(text)||!text?'中风险':text};
+    if(/轻度|低危|低风险|蓝色|安全|无霜冻|无/.test(text)||(Number.isFinite(numeric)&&numeric<=1)) return {key:'low',label:/^\d+$/.test(text)||!text?'低风险':text};
+    return {key:'unknown',label:text||'未分级'};
+  }
+  function normalizeAlerts(payload){
+    return unwrapList(payload).map(function(item){
+      var date=parseDate(item.alert_time||item.time||item.created_at||item.date);
+      if(!date) return null;
+      var level=levelInfo(item.alert_level||item.level||item.risk_level);
+      var tempRaw=item.min_temp!=null?item.min_temp:item.temperature!=null?item.temperature:item.temp;
+      var temp=Number(tempRaw);
+      return {date:date,level:level,temp:Number.isFinite(temp)?temp:null};
+    }).filter(Boolean).sort(function(a,b){return b.date-a.date;});
+  }
+  function buildDemoAlerts(){
+    var now=new Date();
+    var specs=[
+      {d:1,h:3,m:20,temp:0.6,level:'重度霜冻'},
+      {d:1,h:23,m:50,temp:2.2,level:'中度霜冻'},
+      {d:2,h:4,m:10,temp:-0.4,level:'重度霜冻'},
+      {d:2,h:22,m:35,temp:4.1,level:'轻度霜冻'},
+      {d:3,h:5,m:0,temp:5.3,level:'轻度霜冻'},
+      {d:3,h:23,m:10,temp:3.4,level:'中度霜冻'},
+      {d:4,h:3,m:35,temp:2.1,level:'中度霜冻'},
+      {d:4,h:4,m:40,temp:1.2,level:'重度霜冻'},
+      {d:5,h:5,m:10,temp:6.1,level:'轻度霜冻'},
+      {d:6,h:3,m:45,temp:2.8,level:'中度霜冻'}
+    ];
+    return normalizeAlerts(specs.map(function(spec){
+      var d=new Date(now.getTime()-spec.d*24*60*60*1000);
+      d.setHours(spec.h,spec.m,0,0);
+      return {alert_time:d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes())+':00',alert_level:spec.level,min_temp:spec.temp};
+    }));
+  }
+  function loadAlerts(){
+    state.alerts=buildDemoAlerts();
+    setSource('alerts','demo','本地 Mock');
+    renderAlerts();
+    markLastRefresh();
+    return Promise.resolve(true);
+  }
+  function renderAlerts(){
+    var rows=state.alerts||[];
+    var body=document.getElementById('alertBody');
+    var empty=document.getElementById('alertEmpty');
+    var count=document.getElementById('alertCount');
+    if(count) count.textContent=String(rows.length);
+    if(!body) return;
+    if(!rows.length){
+      body.innerHTML='';
+      if(empty) empty.classList.add('show');
+      return;
+    }
+    if(empty) empty.classList.remove('show');
+    body.innerHTML=rows.map(function(row){
+      var high=row.level.key==='high'||(row.temp!=null&&row.temp<0);
+      var temp=row.temp==null?'--':(row.temp>0?'+':'')+row.temp.toFixed(1)+'℃';
+      var critical=row.temp!=null&&row.temp<3;
+      var levelKey=['high','mid','low'].indexOf(row.level.key)>-1?row.level.key:'unknown';
+      return '<tr class="'+(high?'is-danger':'')+'">'+
+        '<td><span class="alert-time"><strong>'+escapeHtml(monthDay(row.date))+'</strong><span>'+pad(row.date.getHours())+':'+pad(row.date.getMinutes())+'</span></span></td>'+
+        '<td><span class="alert-temp'+(critical?' critical':'')+'">'+escapeHtml(temp)+'</span></td>'+
+        '<td><span class="alert-level '+levelKey+'"><span class="dot"></span>'+escapeHtml(row.level.label)+'</span></td>'+
+        '</tr>';
+    }).join('');
+    var dot=document.getElementById('alertDot');
+    if(dot) dot.className='dot '+(state.sources.alerts==='live'||state.sources.alerts==='stale'?'live':'demo');
+    var sourceText=document.getElementById('alertSourceText');
+    if(sourceText){
+      sourceText.textContent='数据源 · 本地 Mock';
+    }
+  }
+
+  /* ---------- 分区模拟数据 ---------- */
+  function zoneBase(){
+    return {
+      A:{id:'A',zoneName:'A区 · 谷地茶园',terrain:'低洼谷地 · 冷空气易沉积',temp:2.1,humidity:92,wind:0.8,soil:2.6,risk:82,tip:'建议：凌晨易结霜，提前覆盖幼嫩茶篷，并安排 2:00 后巡园。'},
+      B:{id:'B',zoneName:'B区 · 坡地茶园',terrain:'缓坡地带 · 通风条件一般',temp:5.8,humidity:86,wind:1.6,soil:6.7,risk:54,tip:'建议：关注凌晨 2–5 点温度，备好防霜布，保持坡面排水通畅。'},
+      C:{id:'C',zoneName:'C区 · 山脊茶园',terrain:'山脊开阔 · 空气流动性好',temp:8.9,humidity:74,wind:2.4,soil:10.2,risk:21,tip:'建议：保持日常巡园，睡前复看实时温度曲线即可。'}
+    };
+  }
+  function buildZones(){
+    var base=zoneBase();
+    var tick=Math.floor(Date.now()/10000);
+    Object.keys(base).forEach(function(key,index){
+      var z=base[key];
+      var wave=Math.sin((tick+index*3)/4);
+      z.temp=round1(z.temp+wave*.16);
+      z.humidity=Math.round(z.humidity+Math.cos((tick+index)/5)*1.2);
+      z.wind=round1(z.wind+Math.sin((tick+index)/6)*.1);
+      z.soil=round1(z.soil+wave*.2);
+      z.risk=Math.round(clamp(z.risk+wave*2,0,100));
+      state.zones[key]=z;
+    });
+    return state.zones;
+  }
+  function zoneKeyFromRisk(risk){
+    return risk>=65?'danger':risk>=35?'warn':'safe';
+  }
+  function renderZones(){
+    Object.keys(state.zones).forEach(function(key){
+      var z=state.zones[key];
+      var marker=document.getElementById('marker'+key+'Temp');
+      if(marker) marker.textContent=z.temp.toFixed(1)+'°C';
+      var group=document.querySelector('.zone[data-zone="'+key+'"]');
+      if(group){
+        group.classList.remove('risk-danger','risk-warn','risk-safe');
+        group.classList.add('risk-'+zoneKeyFromRisk(z.risk));
+      }
+    });
+    renderZoneDetail(false);
+  }
+  function renderZoneDetail(animate){
+    var z=state.zones[state.selectedZone];
+    if(!z) return;
+    setText('detailZone',z.zoneName);
+    setText('detailTitle',z.terrain);
+    setText('detailTemp',z.temp.toFixed(1));
+    setText('detailHumidity',Math.round(z.humidity)+'%');
+    setText('detailWind',z.wind.toFixed(1)+' m/s');
+    setText('detailSoil',z.soil.toFixed(1)+'℃');
+    setText('zoneRiskValue',String(z.risk));
+    setText('detailTip',z.tip);
+    var riskBadge=document.getElementById('detailRisk');
+    var key=zoneKeyFromRisk(z.risk);
+    if(riskBadge){
+      riskBadge.className='risk-badge '+key;
+      riskBadge.textContent=key==='danger'?'危险':key==='warn'?'注意':'安全';
+    }
+    var bar=document.getElementById('zoneRiskBar');
+    if(bar){bar.className=key;bar.style.width=z.risk+'%';}
+    var detail=document.getElementById('zoneDetail');
+    if(animate&&detail){
+      detail.classList.remove('is-flashing');
+      void detail.offsetWidth;
+      detail.classList.add('is-flashing');
+    }
+    document.querySelectorAll('.zone').forEach(function(node){
+      var active=node.getAttribute('data-zone')===state.selectedZone;
+      node.classList.toggle('is-active',active);
+      node.classList.toggle('is-dimmed',!active);
+      node.setAttribute('aria-pressed',active?'true':'false');
+    });
+  }
+  function selectZone(key,animate){
+    if(!state.zones[key]) return;
+    state.selectedZone=key;
+    renderZoneDetail(animate!==false);
+    var z=state.zones[key];
+    announce(z.zoneName+'，温度 '+z.temp.toFixed(1)+' 摄氏度，风险 '+z.risk);
+  }
+  function bindZones(){
+    document.querySelectorAll('.zone').forEach(function(zone){
+      var key=zone.getAttribute('data-zone');
+      zone.addEventListener('click',function(){selectZone(key,true);});
+      zone.addEventListener('keydown',function(event){
+        if(event.key==='Enter'||event.key===' '){
+          event.preventDefault();
+          selectZone(key,true);
+        }
+      });
+    });
+  }
+  function setText(id,text){var node=document.getElementById(id);if(node)node.textContent=text;}
+
+  /* ---------- ECharts 选项 ---------- */
+  function tooltipBox(){
+    return {
+      backgroundColor:'rgba(255,255,252,.96)',
+      borderColor:'rgba(163,210,177,.55)',
+      borderWidth:1,
+      padding:[7,10],
+      textStyle:{color:'#456954',fontSize:10,fontFamily:'Avenir Next, PingFang SC, sans-serif'},
+      extraCssText:'box-shadow:0 12px 30px rgba(42,87,57,.12);border-radius:10px;'
+    };
+  }
+  function gaugeOption(risk){
+    var key=riskProfile(risk).key;
+    var colors=key==='danger'?['#efb3a6','#bd6152']:key==='warn'?['#f0d28f','#bb8a3d']:['#b4dfc5','#3d895b'];
+    return {
+      animationDuration:700,
+      series:[{
+        type:'gauge',startAngle:210,endAngle:-30,min:0,max:100,radius:'93%',center:['50%','55%'],
+        axisLine:{lineStyle:{width:9,color:[[1,'rgba(73,125,89,.085)']]}},
+        progress:{show:true,width:9,roundCap:true,itemStyle:{color:new echarts.graphic.LinearGradient(0,0,1,0,[{offset:0,color:colors[0]},{offset:1,color:colors[1]}]),shadowBlur:14,shadowColor:'rgba(89,164,112,.22)'}},
+        axisTick:{show:true,splitNumber:6,distance:-16,length:3,lineStyle:{color:'rgba(85,132,98,.2)',width:1}},
+        splitLine:{show:false},axisLabel:{show:false},pointer:{show:false},anchor:{show:false},title:{show:false},detail:{show:false},
+        data:[{value:risk}]
+      }]
+    };
+  }
+  function trendOption(){
+    var rows=state.weather||[];
+    var times=rows.map(function(r){return r.timeLabel;});
+    var temp=rows.map(function(r){return r.temperature;});
+    var hum=rows.map(function(r){return r.humidity;});
+    var wind=rows.map(function(r){return r.wind;});
+    var rain=rows.map(function(r){return r.rain;});
+    return {
+      animationDuration:650,
+      animationDurationUpdate:500,
+      grid:{left:34,right:37,top:17,bottom:24},
+      tooltip:Object.assign({trigger:'axis',axisPointer:{type:'line',lineStyle:{color:'rgba(100,143,113,.4)',type:'dashed'}},
+        formatter:function(params){
+          if(!params||!params.length) return '';
+          var out='<div style="font-weight:700;margin-bottom:4px">'+escapeHtml(times[params[0].dataIndex]||'')+' 观测</div>';
+          params.forEach(function(p){
+            var unit=p.seriesName==='风速'?' km/h':p.seriesName==='降水'?' mm':p.seriesName==='湿度'?' %':' ℃';
+            out+='<div style="display:flex;justify-content:space-between;gap:18px;line-height:1.7"><span>'+p.marker+escapeHtml(p.seriesName)+'</span><b style="color:#3f694f">'+(p.value==null?'--':Number(p.value).toFixed(1)+unit)+'</b></div>';
+          });
+          return out;
+        }},tooltipBox()),
+      xAxis:{
+        type:'category',boundaryGap:true,data:times,
+        axisLine:{lineStyle:{color:'rgba(56,101,69,.12)'}},axisTick:{show:false},
+        axisLabel:{color:'#8fa294',fontSize:9.5,interval:2,margin:8,fontFamily:'Avenir Next, PingFang SC, sans-serif'}
+      },
+      yAxis:[
+        {type:'value',min:0,max:100,splitNumber:4,
+         name:'温 / 湿',nameTextStyle:{color:'#9bada0',fontSize:8,padding:[0,0,0,-2]},
+         axisLine:{show:false},axisTick:{show:false},
+         axisLabel:{color:'#94a799',fontSize:9,fontFamily:'Avenir Next, PingFang SC, sans-serif'},
+         splitLine:{lineStyle:{color:'rgba(47,91,60,.07)',type:'dashed'}}},
+        {type:'value',name:'风速 / 降水',nameTextStyle:{color:'#9bada0',fontSize:8,padding:[0,-1,0,0]},min:0,
+         axisLine:{show:false},axisTick:{show:false},
+         axisLabel:{color:'#94a799',fontSize:9,fontFamily:'Avenir Next, PingFang SC, sans-serif'},
+         splitLine:{show:false}}
+      ],
+      series:[
+        {name:'温度',type:'line',yAxisIndex:0,smooth:true,symbol:'circle',symbolSize:4,showSymbol:false,
+         data:temp,lineStyle:{width:2.2,color:'#3f8c5f'},itemStyle:{color:'#3f8c5f'},emphasis:{focus:'series'},
+         areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'rgba(76,153,100,.17)'},{offset:1,color:'rgba(76,153,100,0)'}])},
+         markLine:{silent:true,symbol:['none','none'],data:[{yAxis:3}],lineStyle:{color:'rgba(190,101,83,.72)',type:'dashed',width:1},label:{formatter:'霜冻线 3℃',color:'#b46d5c',fontSize:8,position:'insideEndTop'}}},
+        {name:'湿度',type:'line',yAxisIndex:0,smooth:true,symbol:'none',data:hum,lineStyle:{width:1.7,color:'#63b3bc'},itemStyle:{color:'#63b3bc'},emphasis:{focus:'series'}},
+        {name:'风速',type:'line',yAxisIndex:1,smooth:true,symbol:'none',data:wind,lineStyle:{width:1.4,color:'#c79b50',type:'dashed'},itemStyle:{color:'#c79b50'},emphasis:{focus:'series'}},
+        {name:'降水',type:'bar',yAxisIndex:1,data:rain,barWidth:5,itemStyle:{borderRadius:[3,3,0,0],color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'rgba(103,187,194,.6)'},{offset:1,color:'rgba(103,187,194,.18)'}])},emphasis:{focus:'series'}}
+      ]
+    };
+  }
+  function forecastOption(){
+    var rows=state.forecast||[];
+    var times=rows.map(function(r){return r.timeLabel;});
+    var temps=rows.map(function(r){return r.temperature;});
+    var safeTemps=temps.filter(function(t){return Number.isFinite(t);});
+    var min=safeTemps.length?Math.min.apply(null,safeTemps):0;
+    var max=safeTemps.length?Math.max.apply(null,safeTemps):10;
+    var axisMin=Math.floor(Math.min(0,min-2)/2)*2;
+    var axisMax=Math.ceil(Math.max(6,max+2)/2)*2;
+    return {
+      animationDuration:700,
+      grid:{left:29,right:12,top:15,bottom:20},
+      tooltip:Object.assign({trigger:'axis',axisPointer:{type:'line',lineStyle:{color:'rgba(100,143,113,.4)',type:'dashed'}},
+        formatter:function(params){
+          if(!params||!params.length) return '';
+          var p=params[0];var item=rows[p.dataIndex];
+          return '<div style="font-weight:700;margin-bottom:3px">'+(item?escapeHtml(item.timeLabel):'')+' 预测</div>'+
+            '<div style="line-height:1.7">'+p.marker+'气温 <b style="color:#3f694f">'+(item?item.temperature.toFixed(1):'--')+' ℃</b></div>'+
+            (item&&item.risk!=null?'<div style="color:#8c9f92;font-size:9px;margin-top:2px">霜冻风险 '+(item.risk>=65?'高':item.risk>=35?'中':'低')+'</div>':'');
+        }},tooltipBox()),
+      xAxis:{type:'category',boundaryGap:false,data:times,axisLine:{lineStyle:{color:'rgba(56,101,69,.12)'}},axisTick:{show:false},
+        axisLabel:{color:'#8fa294',fontSize:9,interval:1,margin:8,fontFamily:'Avenir Next, PingFang SC, sans-serif'}},
+      yAxis:{type:'value',min:axisMin,max:axisMax,splitNumber:3,name:'℃',nameTextStyle:{color:'#9bada0',fontSize:8},axisLine:{show:false},axisTick:{show:false},axisLabel:{color:'#94a799',fontSize:9},splitLine:{lineStyle:{color:'rgba(47,91,60,.07)',type:'dashed'}}},
+      series:[{
+        name:'预测温度',type:'line',smooth:true,symbol:'circle',symbolSize:4,showSymbol:false,data:temps,
+        lineStyle:{width:2.2,color:'#4b9b7e'},itemStyle:{color:'#4b9b7e'},
+        areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'rgba(83,177,156,.22)'},{offset:1,color:'rgba(83,177,156,0)'}])},
+        markLine:{silent:true,symbol:['none','none'],data:[{yAxis:3}],lineStyle:{color:'rgba(190,101,83,.7)',type:'dashed',width:1},label:{formatter:'3℃',color:'#b46d5c',fontSize:8,position:'insideEndTop'}},
+        emphasis:{focus:'series'}
+      }]
+    };
+  }
+  function renderGaugeChart(){
+    if(!state.chartReady || !state.risk) return;
+    state.charts.gauge.setOption(gaugeOption(state.risk.risk==null?0:state.risk.risk));
+    resizeChartsLater();
+  }
+  function renderTrendChart(){
+    if(!state.chartReady || !state.weather) return;
+    state.charts.trend.setOption(trendOption());
+    resizeChartsLater();
+  }
+  function renderForecastChart(){
+    if(!state.chartReady || !state.forecast) return;
+    state.charts.forecast.setOption(forecastOption());
+    resizeChartsLater();
+  }
+  var chartResizeTimer=null;
+  function resizeChartsLater(){
+    clearTimeout(chartResizeTimer);
+    chartResizeTimer=setTimeout(resizeCharts,220);
+  }
+  function renderAllCharts(){
+    renderGaugeChart();
+    renderTrendChart();
+    renderForecastChart();
+  }
+
+  /* ---------- 刷新 ---------- */
+  function refreshAll(manual){
+    if(state.refreshing) return;
+    state.refreshing=true;
+    var btn=document.getElementById('refreshAll');
+    if(btn) btn.classList.add('is-loading');
+    Promise.allSettled([loadWeather(),loadRisk(),loadForecast(),loadAlerts()]).then(function(){
+      state.refreshing=false;
+      if(btn) btn.classList.remove('is-loading');
+      markLastRefresh();
+      if(manual) announce('大屏数据已刷新');
+    });
+  }
+  var refreshBtn=document.getElementById('refreshAll');
+  if(refreshBtn) refreshBtn.addEventListener('click',function(){refreshAll(true);});
+
+  /* ---------- 初始化与自动刷新 ---------- */
+  function init(){
+    state.weather=buildDemoWeather();
+    state.risk={risk:45,temp:8.4};
+    state.forecast=buildDemoForecast();
+    state.alerts=buildDemoAlerts();
+    buildZones();
+    bindZones();
+    renderWeather();
+    renderRisk();
+    renderForecast();
+    renderAlerts();
+    renderZones();
+    selectZone('A',false);
+    var now=new Date();
+    setText('lastRefresh',timeHMS(now));
+    updateSyncPill();
+    loadWeather();
+    loadRisk();
+    loadForecast();
+    loadAlerts();
+    setInterval(function(){if(!document.hidden){loadWeather();loadRisk();}},10000);
+    setInterval(function(){if(!document.hidden){loadAlerts();}},45000);
+    setInterval(function(){if(!document.hidden){loadForecast();}},300000);
+    setInterval(function(){
+      buildZones();
+      renderZones();
+    },10000);
+    document.addEventListener('visibilitychange',function(){
+      if(document.hidden) return;
+      if(Date.now()-(state.lastWeatherDate?state.lastWeatherDate.getTime():0)>60000) {loadWeather();loadRisk();}
+    });
+  }
+  init();
+})();
+</script>
+</body>
+</html>

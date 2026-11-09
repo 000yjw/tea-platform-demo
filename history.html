@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="智慧茶园历史霜冻告警查询、分析与导出">
+<title>历史告警 · 智慧茶园</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" media="print" onload="this.media='all'">
+<script async src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js" onload="window.__historyEChartsLoaded && window.__historyEChartsLoaded()" onerror="window.__historyEChartsFailed=true"></script>
+<script async src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" onerror="window.__historyXLSXFailed=true"></script>
+<style>
+  :root{
+    --cream:#f8f8f0;
+    --paper:#fffef9;
+    --mint-50:#f4fbf2;
+    --mint-100:#e8f5e9;
+    --mint-200:#dbeedb;
+    --mint-300:#a5d6a7;
+    --leaf:#4a9362;
+    --forest:#205a3a;
+    --forest-deep:#123b26;
+    --ink:#173b27;
+    --muted:#647b6c;
+    --line:rgba(29,74,46,.11);
+    --danger:#b85e50;
+    --amber:#b28139;
+    --shadow-soft:0 18px 50px rgba(31,75,47,.09);
+    --shadow-card:0 23px 55px rgba(31,74,47,.10);
+    --font-body:"Avenir Next","Nunito","PingFang SC","Hiragino Sans GB","Microsoft YaHei UI","Microsoft YaHei",sans-serif;
+    --font-display:"Avenir Next","Futura","PingFang SC","Hiragino Sans GB","Microsoft YaHei UI","Microsoft YaHei",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{min-height:100%}
+  body{
+    font-family:var(--font-body);color:var(--ink);min-height:100vh;position:relative;isolation:isolate;
+    background:
+      radial-gradient(820px 600px at 93% -6%, rgba(255,248,224,.66), transparent 63%),
+      radial-gradient(780px 620px at 3% 9%, rgba(229,244,226,.95), transparent 67%),
+      linear-gradient(132deg,#f9f8f0 0%,#f4f8ee 48%,#edf5ea 100%);
+    opacity:0;transition:opacity .38s ease;-webkit-font-smoothing:antialiased;
+  }
+  body.is-ready{opacity:1}
+  body::before{
+    content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.38;
+    background-image:radial-gradient(rgba(47,96,63,.16) .65px,transparent .65px);
+    background-size:5px 5px;
+    mask-image:linear-gradient(115deg,#000 0%,transparent 41%,#000 100%);
+    -webkit-mask-image:linear-gradient(115deg,#000 0%,transparent 41%,#000 100%);
+  }
+  button,input{font:inherit}
+  button{cursor:pointer}
+  a{color:inherit;text-decoration:none}
+  ::selection{background:#c1e3c3;color:#12341f}
+  :focus-visible{outline:3px solid rgba(62,130,83,.35);outline-offset:3px}
+  .page{width:min(1440px,100%);margin:0 auto;padding:28px clamp(21px,3.1vw,43px) 35px;position:relative;z-index:1}
+
+  /* ---------- 页头 ---------- */
+  .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:21px;animation:rise .55s ease both}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:10px;font-weight:750;letter-spacing:.17em;color:#6d8776;text-transform:uppercase}
+  .eyebrow .spark{width:14px;height:14px;color:#679b74}
+  .page-head h1{margin-top:11px;font-family:var(--font-display);font-size:clamp(30px,3vw,40px);font-weight:760;letter-spacing:-.05em;line-height:1.12;color:var(--forest-deep)}
+  .page-head h1 .dot{color:#7fb58b}
+  .page-head .sub{margin-top:9px;font-size:12px;line-height:1.7;color:#7c8f82;max-width:590px}
+  .head-actions{display:flex;align-items:center;gap:9px;flex-shrink:0;padding-bottom:2px}
+  .source-pill{
+    display:inline-flex;align-items:center;gap:7px;height:33px;padding:0 11px;border-radius:999px;
+    background:rgba(255,255,251,.68);border:1px solid rgba(255,255,255,.9);
+    box-shadow:0 8px 19px rgba(34,77,49,.05);font-size:8.5px;font-weight:700;color:#647b6b;white-space:nowrap;
+  }
+  .source-pill .dot{width:5px;height:5px;border-radius:50%;background:#8aa08f}
+  .source-pill.live{color:#34704b;background:rgba(247,253,245,.86)}
+  .source-pill.live .dot{background:#51a46e;box-shadow:0 0 0 3px rgba(81,164,110,.1);animation:softPulse 2.5s infinite}
+  .source-pill.demo{color:#34704b;background:rgba(247,253,245,.9);border-color:rgba(162,201,167,.36)}
+  .source-pill.demo .dot{background:#51a46e;box-shadow:0 0 0 3px rgba(81,164,110,.1);animation:softPulse 2.5s infinite}
+  .ghost-btn{
+    width:34px;height:34px;display:grid;place-items:center;border-radius:10px;
+    border:1px solid rgba(255,255,255,.9);background:rgba(255,255,252,.65);color:#637b6b;
+    box-shadow:0 8px 19px rgba(34,77,49,.05);transition:.2s;
+  }
+  .ghost-btn svg{width:16px;height:16px}
+  .ghost-btn:hover{background:#fff;color:#2b5d3f;transform:translateY(-1px)}
+  .ghost-btn.loading svg{animation:spin .9s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes softPulse{50%{opacity:.5}}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+  .data-notice{
+    display:none;align-items:center;justify-content:space-between;gap:16px;
+    border-radius:14px;border:1px solid rgba(208,170,95,.27);background:rgba(255,249,234,.83);
+    padding:11px 14px;margin-bottom:16px;box-shadow:0 9px 22px rgba(124,96,41,.05);
+    backdrop-filter:blur(9px);animation:rise .3s ease both;
+  }
+  .data-notice.show{display:flex}
+  .notice-left{display:flex;gap:9px;align-items:flex-start;min-width:0}
+  .notice-left svg{width:16px;height:16px;flex:0 0 16px;color:#b3853d;margin-top:1px}
+  .notice-left strong{font-size:10px;font-weight:750;color:#7f622f}
+  .notice-left p{margin-top:3px;font-size:9px;line-height:1.55;color:#9d8451}
+  .notice-btn{
+    flex:0 0 auto;height:29px;padding:0 10px;border-radius:8px;border:1px solid rgba(167,124,54,.16);
+    background:rgba(255,255,251,.7);color:#856832;font-size:9px;font-weight:700;
+  }
+  .notice-btn:hover{background:#fff}
+
+  /* ---------- 统计卡 ---------- */
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
+  .stat-card{
+    position:relative;min-height:119px;padding:18px 19px;border-radius:22px;
+    background:rgba(255,255,251,.8);border:1px solid rgba(255,255,255,.86);
+    box-shadow:var(--shadow-card);backdrop-filter:blur(13px);overflow:hidden;
+    animation:rise .6s cubic-bezier(.2,.8,.3,1) both;transition:transform .22s ease,box-shadow .22s ease;
+  }
+  .stat-card:nth-child(2){animation-delay:.05s}.stat-card:nth-child(3){animation-delay:.1s}.stat-card:nth-child(4){animation-delay:.15s}
+  .stat-card:hover{transform:translateY(-2px);box-shadow:0 27px 58px rgba(31,74,47,.13)}
+  .stat-card::before{content:"";position:absolute;width:112px;height:112px;right:-43px;top:-46px;border-radius:50%;background:rgba(196,228,195,.23);pointer-events:none}
+  .stat-card.accent{
+    background:linear-gradient(140deg,#357c54 0%,#1e5a3a 62%,#153f2a 100%);
+    border-color:rgba(255,255,255,.18);box-shadow:0 22px 45px rgba(25,69,43,.25);color:#fff;
+  }
+  .stat-card.accent::before{border:1px solid rgba(255,255,255,.12);background:transparent;box-shadow:0 0 0 22px rgba(255,255,255,.03)}
+  .stat-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;position:relative;z-index:1}
+  .stat-label{font-size:10px;font-weight:700;letter-spacing:.1em;color:#83988a;text-transform:uppercase}
+  .stat-icon{width:29px;height:29px;border-radius:9px;display:grid;place-items:center;color:#52825f;background:rgba(232,245,229,.75);flex-shrink:0}
+  .stat-icon svg{width:15px;height:15px}
+  .stat-value{display:flex;align-items:baseline;gap:4px;margin-top:12px;position:relative;z-index:1;line-height:1}
+  .stat-value strong{font-family:var(--font-display);font-size:32px;font-weight:760;letter-spacing:-.055em;color:var(--forest-deep);font-variant-numeric:tabular-nums}
+  .stat-value small{font-size:10px;color:#84988a;font-weight:600}
+  .stat-note{margin-top:8px;font-size:9.5px;color:#91a295;position:relative;z-index:1}
+  .accent .stat-label{color:rgba(225,244,227,.6)}
+  .accent .stat-icon{color:#e4f5e7;background:rgba(255,255,255,.11);border:1px solid rgba(255,255,255,.08)}
+  .accent .stat-value strong{color:#fff}
+  .accent .stat-value small{color:rgba(221,241,224,.62)}
+  .accent .stat-note{color:rgba(219,240,222,.57)}
+
+  /* ---------- 图表 ---------- */
+  .analysis-grid{display:grid;grid-template-columns:minmax(0,1.52fr) minmax(330px,.82fr);gap:15px;margin-bottom:16px}
+  .panel{
+    border-radius:23px;background:rgba(255,255,251,.82);border:1px solid rgba(255,255,255,.88);
+    box-shadow:var(--shadow-soft);backdrop-filter:blur(13px);overflow:hidden;
+  }
+  .chart-panel{padding:18px 20px 14px;min-width:0;animation:rise .63s cubic-bezier(.2,.8,.3,1) .2s both}
+  .panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+  .panel-title{display:flex;align-items:center;gap:9px;min-width:0}
+  .panel-title .p-icon{width:27px;height:27px;border-radius:8px;display:grid;place-items:center;background:rgba(232,245,229,.85);color:#4d855f;flex:0 0 27px}
+  .panel-title .p-icon svg{width:14px;height:14px}
+  .panel-title h2{font-family:var(--font-display);font-size:14.5px;font-weight:740;letter-spacing:-.02em;color:#264f36;white-space:nowrap}
+  .panel-title p{margin-top:3px;font-size:9.5px;color:#8fa094;letter-spacing:.015em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chart-note{
+    font-size:8.5px;color:#8b9d90;background:rgba(244,250,241,.8);border:1px solid rgba(255,255,255,.75);
+    border-radius:7px;padding:5px 8px;white-space:nowrap;flex-shrink:0;
+  }
+  .chart-host{height:230px;position:relative;margin-top:7px}
+  .echarts-host{width:100%;height:100%;min-height:230px}
+  .chart-loading{
+    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;
+    color:#90a194;font-size:8.5px;background:rgba(255,255,251,.66);z-index:2;transition:opacity .25s ease;
+  }
+  .chart-loading.hidden{opacity:0;visibility:hidden}
+  .chart-loading .mini-loader{width:23px;height:23px;border-radius:50%;border:1.5px solid rgba(80,145,102,.18);border-top-color:#528d68;animation:spin .9s linear infinite}
+  .chart-empty{
+    position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:7px;
+    color:#94a599;font-size:9px;text-align:center;padding:20px;z-index:2;
+  }
+  .chart-empty.show{display:flex}
+  .chart-empty svg{width:28px;height:28px;color:#b2c6b5}
+
+  .chart-fallback{position:absolute;inset:0;z-index:1;width:auto;height:auto;display:none;padding:6px 2px 0;flex-direction:column;justify-content:flex-end}
+  .chart-fallback.show{display:flex}
+  .fallback-bars{height:168px;display:flex;align-items:flex-end;gap:clamp(7px,2.4vw,24px);padding:0 8px;border-bottom:1px solid rgba(39,84,55,.1);position:relative}
+  .fallback-bars::before{content:"";position:absolute;left:0;right:0;top:33%;border-top:1px dashed rgba(39,84,55,.08)}
+  .fallback-bars::after{content:"";position:absolute;left:0;right:0;top:66%;border-top:1px dashed rgba(39,84,55,.07)}
+  .fb-col{flex:1;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;min-width:0;position:relative;z-index:1}
+  .fb-value{font-size:8px;color:#6f8e78;font-weight:700}
+  .fb-bar{width:min(32px,68%);border-radius:7px 7px 2px 2px;background:linear-gradient(180deg,#82b994,#4c9364);min-height:0;transition:height .7s cubic-bezier(.2,.8,.3,1)}
+  .fallback-labels{display:flex;gap:clamp(7px,2.4vw,24px);padding:8px 8px 0}
+  .fallback-labels span{flex:1;text-align:center;font-size:7.5px;color:#99aa9d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fallback-pie-wrap{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px}
+  .fallback-donut{
+    width:125px;height:125px;border-radius:50%;position:relative;display:grid;place-items:center;
+    background:conic-gradient(#4d9665 0 45%,#c59a4b 45% 70%,#c26a58 70% 100%);
+    box-shadow:0 12px 30px rgba(34,81,51,.11);
+  }
+  .fallback-donut::before{content:"";position:absolute;inset:20px;border-radius:50%;background:#fffdf7;box-shadow:inset 0 0 0 1px rgba(255,255,255,.8)}
+  .fallback-donut-center{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:2px}
+  .fallback-donut-center strong{font-family:var(--font-display);font-size:25px;font-weight:760;letter-spacing:-.05em;color:#2a583b;line-height:1}
+  .fallback-donut-center span{font-size:7px;color:#94a599;letter-spacing:.04em}
+  .fallback-pie-note{font-size:8px;color:#93a599}
+
+  .donut-layout{display:grid;grid-template-columns:1fr 130px;gap:4px;align-items:center;height:230px;margin-top:5px}
+  .donut-host{height:100%;min-height:190px;position:relative}
+  .level-legend{list-style:none;display:flex;flex-direction:column;gap:10px;padding:0 4px 0 0}
+  .level-legend li{display:flex;align-items:center;gap:7px;min-width:0}
+  .level-legend .l-dot{width:7px;height:7px;border-radius:50%;flex:0 0 7px}
+  .level-legend .l-dot.high{background:#c16b59}.level-legend .l-dot.mid{background:#c79b4c}.level-legend .l-dot.low{background:#4d9665}
+  .level-legend .l-copy{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1}
+  .level-legend .l-copy span{font-size:9px;color:#8e9f92;white-space:nowrap}
+  .level-legend .l-copy strong{font-size:11px;color:#456a52;font-weight:730;font-variant-numeric:tabular-nums}
+  .level-legend .l-pct{font-size:8.5px;color:#a0afa3;font-weight:600;white-space:nowrap}
+
+  /* ---------- 表格区 ---------- */
+  .table-panel{padding:19px 20px 16px;animation:rise .7s cubic-bezier(.2,.8,.3,1) .28s both}
+  .table-heading{display:flex;align-items:center;gap:10px}
+  .table-heading h2{font-family:var(--font-display);font-size:14.5px;font-weight:740;color:#264f36;letter-spacing:-.02em}
+  .count-pill{font-size:9px;color:#8b9e90;background:#f2f8ef;border:1px solid rgba(255,255,255,.72);border-radius:6px;padding:4px 7px;font-weight:650}
+  .table-source{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:9px;color:#93a497}
+  .table-source .t-dot{width:4px;height:4px;border-radius:50%;background:#a9b8ac}
+  .table-source.live .t-dot{background:#52a56e}.table-source.demo .t-dot{background:#52a56e}
+
+  .toolbar{
+    display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin-top:15px;padding:12px;
+    border-radius:15px;background:rgba(244,250,241,.74);border:1px solid rgba(255,255,255,.78);
+  }
+  .date-group{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .date-field{
+    position:relative;display:flex;align-items:center;gap:7px;height:34px;padding:0 9px;border-radius:9px;
+    background:rgba(255,255,252,.88);border:1px solid rgba(39,82,53,.1);transition:.2s;
+  }
+  .date-field:focus-within{border-color:#83b18e;box-shadow:0 0 0 3px rgba(93,150,109,.1)}
+  .date-field svg{width:13px;height:13px;color:#88a08f;flex:0 0 13px}
+  .date-field input{
+    border:0;outline:0;background:transparent;width:118px;color:#4b6957;font-size:10px;letter-spacing:.02em;
+    color-scheme:light;
+  }
+  .date-field input::-webkit-calendar-picker-indicator{opacity:.42;cursor:pointer;width:11px;height:11px}
+  .date-arrow{color:#a7b4a9;font-size:10px;padding:0 1px}
+  .search-box{
+    flex:1;min-width:190px;max-width:330px;position:relative;display:flex;align-items:center;height:34px;
+    background:rgba(255,255,252,.88);border:1px solid rgba(39,82,53,.1);border-radius:9px;transition:.2s;
+  }
+  .search-box:focus-within{border-color:#83b18e;box-shadow:0 0 0 3px rgba(93,150,109,.1)}
+  .search-box svg{width:14px;height:14px;color:#8ba092;margin-left:10px;flex-shrink:0}
+  .search-box input{flex:1;min-width:0;height:100%;border:0;outline:0;background:transparent;padding:0 10px 0 7px;color:#466753;font-size:10.5px}
+  .search-box input::placeholder{color:#a9b7ad}
+  .clear-search{border:0;background:transparent;color:#a3b1a6;width:24px;height:24px;display:none;place-items:center;margin-right:5px;border-radius:5px}
+  .clear-search.show{display:grid}
+  .clear-search:hover{background:#eef6eb;color:#637d6c}
+  .toolbar-spacer{flex:1;min-width:1px}
+  .reset-btn{
+    height:34px;padding:0 9px;border:1px solid transparent;border-radius:8px;background:transparent;color:#7b8f81;font-size:10px;font-weight:650;
+  }
+  .reset-btn:hover{background:rgba(255,255,255,.6);color:#526d5b}
+  .export-btn{
+    height:35px;padding:0 13px;border:0;border-radius:9px;display:inline-flex;align-items:center;gap:7px;
+    background:linear-gradient(135deg,#3b8358,#245f3e);color:#fff;font-size:10.5px;font-weight:750;
+    box-shadow:0 9px 19px rgba(32,82,50,.18),inset 0 1px 0 rgba(255,255,255,.18);transition:.2s;
+  }
+  .export-btn:hover{transform:translateY(-1px);box-shadow:0 12px 23px rgba(32,82,50,.23)}
+  .export-btn:active{transform:none}
+  .export-btn .btn-emoji{font-size:11px;line-height:1;filter:saturate(.85)}
+  .export-btn svg{width:13px;height:13px}
+  .export-btn.loading{pointer-events:none;opacity:.75}
+
+  .table-wrap{margin-top:12px;overflow-x:auto;border-radius:13px;border:1px solid rgba(37,80,51,.07)}
+  table{width:100%;border-collapse:separate;border-spacing:0;min-width:790px}
+  thead th{
+    background:#edf7e9;color:#698173;font-size:9px;font-weight:750;letter-spacing:.08em;
+    text-align:left;padding:10px 12px;border-bottom:1px solid rgba(36,80,52,.08);white-space:nowrap;
+  }
+  thead th:first-child{border-radius:12px 0 0 0}
+  thead th:last-child{border-radius:0 12px 0 0}
+  tbody tr{background:rgba(255,255,252,.55);transition:background .18s ease}
+  tbody tr:nth-child(even){background:rgba(243,250,240,.68)}
+  tbody tr:hover{background:#eaf5e5}
+  tbody tr:last-child td{border-bottom:0}
+  tbody td{
+    padding:11px 12px;border-bottom:1px solid rgba(37,80,51,.055);font-size:11px;color:#546d5d;
+    white-space:nowrap;transition:background .18s ease;
+  }
+  .time-cell{display:flex;align-items:center;gap:7px;color:#496452;font-variant-numeric:tabular-nums}
+  .time-cell .clock-dot{width:4px;height:4px;border-radius:50%;background:#a9b9ac;flex:0 0 4px}
+  .level-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 7px;border-radius:5px;font-size:9px;font-weight:700;white-space:nowrap}
+  .level-badge .lvl-dot{width:4px;height:4px;border-radius:50%}
+  .level-badge.high{background:#fae9e4;color:#a74f42}.level-badge.high .lvl-dot{background:#bd6653}
+  .level-badge.mid{background:#f8eedb;color:#936c2c}.level-badge.mid .lvl-dot{background:#c39242}
+  .level-badge.low{background:#e8f5e6;color:#3d7952}.level-badge.low .lvl-dot{background:#529b68}
+  .level-badge.unknown{background:#f0f3ee;color:#7a8d7d}.level-badge.unknown .lvl-dot{background:#9bad9f}
+  .temp-cell{display:flex;align-items:center;gap:7px;font-variant-numeric:tabular-nums}
+  .temp-cell strong{font-size:10px;font-weight:740;color:#486653}
+  .temp-cell.cold strong{color:#b65c4d}
+  .temp-cell.cool strong{color:#ad7e37}
+  .temp-cell .temp-bar{width:30px;height:3px;border-radius:99px;background:rgba(40,85,55,.09);overflow:hidden}
+  .temp-cell .temp-bar i{display:block;height:100%;border-radius:inherit;background:#7ab188;width:30%}
+  .temp-cell.cold .temp-bar i{background:#cc7c6b}.temp-cell.cool .temp-bar i{background:#d1aa61}
+  .humidity-cell{display:flex;align-items:center;gap:7px;font-variant-numeric:tabular-nums}
+  .humidity-cell .hum-bar{width:28px;height:3px;border-radius:99px;background:rgba(40,85,55,.09);overflow:hidden}
+  .humidity-cell .hum-bar i{display:block;height:100%;border-radius:inherit;background:#82b793}
+  .advice-cell{max-width:260px;overflow:hidden;text-overflow:ellipsis;color:#7a8d80;font-size:9.5px}
+  .detail-btn{
+    width:25px;height:25px;border-radius:7px;border:1px solid rgba(45,87,58,.09);background:rgba(255,255,252,.7);
+    color:#789181;display:grid;place-items:center;transition:.2s;
+  }
+  .detail-btn svg{width:12px;height:12px}
+  .detail-btn:hover{background:#fff;color:#326b49;border-color:rgba(57,118,78,.18);transform:translateX(1px)}
+  .skeleton-row td{height:43px}
+  .sk{display:block;height:8px;border-radius:99px;background:linear-gradient(90deg,#e8f1e3 25%,#f4f9f1 37%,#e8f1e3 63%);background-size:400% 100%;animation:sk 1.4s infinite}
+  @keyframes sk{0%{background-position:100% 50%}100%{background-position:0 50%}}
+  .empty-state{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:215px;gap:9px;text-align:center;padding:24px}
+  .empty-state.show{display:flex}
+  .empty-art{width:54px;height:54px;border-radius:17px;display:grid;place-items:center;background:rgba(231,244,228,.8);color:#7ea88a}
+  .empty-art svg{width:25px;height:25px}
+  .empty-state strong{font-size:11px;color:#5f7768;font-weight:700}
+  .empty-state p{font-size:8.5px;color:#98a89c;line-height:1.6}
+  .table-footer{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:12px;flex-wrap:wrap}
+  .footer-info{font-size:9px;color:#95a599}
+  .pagination{display:flex;align-items:center;gap:5px}
+  .page-btn{
+    min-width:26px;height:26px;padding:0 7px;border-radius:7px;border:1px solid rgba(41,83,54,.09);
+    background:rgba(255,255,252,.66);color:#6d8475;font-size:9px;font-weight:650;display:inline-flex;align-items:center;justify-content:center;transition:.2s;
+  }
+  .page-btn:hover:not(:disabled){background:#fff;color:#315f42}
+  .page-btn:disabled{opacity:.4;cursor:not-allowed}
+  .page-btn svg{width:11px;height:11px}
+  .page-indicator{font-size:9px;color:#8b9e90;padding:0 5px;font-variant-numeric:tabular-nums}
+
+  .page-foot{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:14px;padding:0 4px;font-size:9px;color:#95a599;flex-wrap:wrap}
+  .page-foot span{display:inline-flex;align-items:center;gap:6px}
+  .page-foot .fdot{width:4px;height:4px;border-radius:50%;background:#4ea46c}
+  .page-foot b{color:#748a7b;font-weight:650}
+
+  /* ---------- 弹窗 ---------- */
+  .modal{
+    position:fixed;inset:0;z-index:80;background:rgba(19,46,29,.26);backdrop-filter:blur(8px);
+    display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;visibility:hidden;transition:.24s ease;
+  }
+  .modal.open{opacity:1;visibility:visible}
+  .modal-card{
+    width:min(490px,100%);background:#fffdf8;border-radius:24px;border:1px solid rgba(255,255,255,.9);
+    box-shadow:0 32px 72px rgba(21,51,32,.24);padding:24px;position:relative;
+    transform:translateY(11px) scale(.985);transition:.26s cubic-bezier(.2,.8,.3,1);
+  }
+  .modal.open .modal-card{transform:none}
+  .modal-close{position:absolute;right:14px;top:14px;width:27px;height:27px;border-radius:8px;border:0;background:#f1f6ee;color:#84998a;display:grid;place-items:center}
+  .modal-close:hover{background:#e7f1e3;color:#587061}
+  .modal-close svg{width:13px;height:13px}
+  .modal-top{display:flex;align-items:center;gap:10px;margin-bottom:18px;padding-right:30px}
+  .modal-icon{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:#f9eadf;color:#b4614f;flex:0 0 38px}
+  .modal-icon svg{width:18px;height:18px}
+  .modal-top h3{font-family:var(--font-display);font-size:16px;font-weight:740;color:#244d35;letter-spacing:-.02em}
+  .modal-top p{margin-top:3px;font-size:8.5px;color:#93a598}
+  .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .detail-cell{background:#f5faf2;border:1px solid rgba(255,255,255,.8);border-radius:10px;padding:10px 11px}
+  .detail-cell span{display:block;font-size:7.5px;color:#93a498;letter-spacing:.04em}
+  .detail-cell strong{display:block;margin-top:4px;font-size:11.5px;color:#3f684f;font-weight:700;font-variant-numeric:tabular-nums}
+  .modal-advice{margin-top:12px;background:#eef7ea;border-radius:11px;padding:12px;border:1px solid rgba(255,255,255,.7)}
+  .modal-advice span{display:block;font-size:7.5px;color:#79927e;letter-spacing:.06em;font-weight:750}
+  .modal-advice p{margin-top:5px;font-size:9.5px;line-height:1.65;color:#5c7765}
+  .modal-actions{display:flex;gap:8px;margin-top:17px}
+  .modal-actions button{flex:1;height:38px;border-radius:10px;font-size:9.5px;font-weight:700}
+  .modal-cancel{border:1px solid rgba(43,86,57,.11);background:#f4f8f1;color:#637c6c}
+  .modal-cancel:hover{background:#ecf4e8}
+  .modal-confirm{border:0;background:linear-gradient(135deg,#43865b,#28613f);color:#fff;box-shadow:0 8px 18px rgba(32,80,49,.15)}
+  .modal-confirm:hover{filter:brightness(1.04)}
+
+  /* ---------- Toast ---------- */
+  .toast-stack{position:fixed;right:19px;top:19px;z-index:120;display:flex;flex-direction:column;gap:8px;width:min(330px,calc(100vw - 30px));pointer-events:none}
+  .toast{
+    display:flex;align-items:flex-start;gap:9px;background:rgba(255,255,252,.97);border:1px solid rgba(255,255,255,.9);
+    border-radius:14px;padding:11px 12px;box-shadow:0 16px 38px rgba(29,65,41,.17);pointer-events:auto;
+    animation:toastIn .28s ease both;backdrop-filter:blur(15px);
+  }
+  .toast.leaving{animation:toastOut .22s ease forwards}
+  .toast .t-icon{width:24px;height:24px;border-radius:8px;display:grid;place-items:center;flex:0 0 24px;background:#e9f5e9;color:#2f7b4d}
+  .toast.error .t-icon{background:#faebe8;color:#b24f43}
+  .toast.info .t-icon{background:#edf3ed;color:#5f7969}
+  .toast .t-icon svg{width:13px;height:13px}
+  .toast strong{display:block;font-size:10.5px;color:#234532}
+  .toast p{margin-top:2px;font-size:9.5px;line-height:1.5;color:#728579}
+  .toast .t-close{border:0;background:transparent;color:#a0aea4;font-size:15px;line-height:1;padding:0 1px;flex:0 0 auto}
+  @keyframes toastIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+  @keyframes toastOut{to{opacity:0;transform:translateX(16px)}}
+
+  @media (max-width:1000px){
+    .stats-grid{grid-template-columns:1fr 1fr}
+    .analysis-grid{grid-template-columns:1fr}
+    .donut-layout{grid-template-columns:1fr 170px;height:210px}
+    .level-legend{flex-direction:row;flex-wrap:wrap;gap:8px 16px;padding:0}
+    .level-legend li{flex:0 0 auto}
+    .level-legend .l-pct{display:none}
+    .chart-host{height:205px}
+    .echarts-host{min-height:205px}
+  }
+  @media (max-width:760px){
+    .page{padding:18px 13px 25px}
+    .page-head{align-items:flex-start;flex-direction:column;gap:14px}
+    .head-actions{width:100%;justify-content:space-between}
+    .stats-grid{grid-template-columns:1fr 1fr;gap:9px}
+    .stat-card{min-height:107px;padding:14px;border-radius:18px}
+    .stat-value strong{font-size:25px}
+    .analysis-grid{gap:10px}
+    .chart-panel{padding:15px 14px 10px;border-radius:19px}
+    .table-panel{padding:15px 13px 13px;border-radius:19px}
+    .toolbar{padding:9px;gap:7px}
+    .search-box{order:3;flex-basis:100%;max-width:none}
+    .toolbar-spacer{display:none}
+    .export-btn{margin-left:auto}
+    .date-field input{width:104px}
+    .panel-head{flex-wrap:wrap;gap:8px}
+    .chart-note{display:none}
+    .chart-host{height:185px}
+    .echarts-host{min-height:185px}
+    .donut-layout{grid-template-columns:1fr;height:auto;gap:8px}
+    .donut-host{height:170px;min-height:170px}
+    .level-legend{justify-content:center;gap:7px 13px}
+    .table-footer{gap:9px}
+    .footer-info{font-size:7.5px}
+    .page-foot{font-size:7.5px}
+  }
+  @media (max-width:430px){
+    .page-head h1{font-size:30px}
+    .stats-grid{gap:7px}
+    .stat-card{padding:12px}
+    .stat-value strong{font-size:23px}
+    .stat-note{font-size:7.5px}
+    .date-group{width:100%}
+    .date-field{flex:1;min-width:0}
+    .date-field input{width:100%}
+    .search-box{min-width:0}
+    .export-btn{width:100%;justify-content:center;order:5}
+    .reset-btn{order:4}
+    .detail-grid{grid-template-columns:1fr 1fr}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important}
+  }
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="page-head">
+    <div>
+      <span class="eyebrow">
+        <svg class="spark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 2.8c.5 3.8 2.3 5.6 6.1 6.1-3.8.5-5.6 2.3-6.1 6.1-.5-3.8-2.3-5.6-6.1-6.1 3.8-.5 5.6-2.3 6.1-6.1Z" stroke-linejoin="round"/></svg>
+        告警档案 · ALERT ARCHIVE
+      </span>
+      <h1>历史告警<span class="dot">.</span></h1>
+      <p class="sub">回看每一次霜冻预警，用数据复盘茶园的冷暖时刻。筛选、分析、导出，一份完整的茶园安全档案。</p>
+    </div>
+    <div class="head-actions">
+      <span class="source-pill demo" id="sourcePill"><span class="dot"></span><span id="sourcePillText">前端演示模式</span></span>
+      <button type="button" class="ghost-btn" id="refreshBtn" title="刷新演示告警" aria-label="刷新演示告警">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20 7.5v5h-5" stroke-linecap="round" stroke-linejoin="round"/><path d="M19.2 12.5a7.2 7.2 0 1 0-1.4 4.2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="data-notice" id="dataNotice" role="status" aria-live="polite">
+    <div class="notice-left">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M10.3 4.1 2.4 18a2 2 0 0 0 1.8 3h15.6a2 2 0 0 0 1.8-3L13.7 4.1a2 2 0 0 0-3.4 0Z" stroke-linejoin="round"/><path d="M12 9v4.2M12 16.6v.2" stroke-linecap="round"/></svg>
+      <div>
+        <strong id="noticeTitle">当前为前端演示模式</strong>
+        <p id="noticeText">所有告警均由浏览器本地生成，筛选、图表、导出与详情均可正常体验，无需服务器与数据库。</p>
+      </div>
+    </div>
+    <button type="button" class="notice-btn" id="noticeRetry">刷新演示数据</button>
+  </div>
+
+  <section class="stats-grid" aria-label="告警统计">
+    <article class="stat-card accent">
+      <div class="stat-top">
+        <span class="stat-label">告警记录</span>
+        <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M5.5 4.5h13a1.5 1.5 0 0 1 1.5 1.5v12a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18V6a1.5 1.5 0 0 1 1.5-1.5Z"/><path d="M8 9h8M8 12.5h8M8 16h5" stroke-linecap="round"/></svg></span>
+      </div>
+      <div class="stat-value"><strong id="statTotal">--</strong><small>条</small></div>
+      <p class="stat-note" id="statTotalNote">当前筛选范围</p>
+    </article>
+    <article class="stat-card">
+      <div class="stat-top">
+        <span class="stat-label">高风险告警</span>
+        <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 3.4 3.9 18.1a2 2 0 0 0 1.8 3h12.6a2 2 0 0 0 1.8-3L12 3.4Z" stroke-linejoin="round"/><path d="M12 9.1v4.2M12 16.5v.2" stroke-linecap="round"/></svg></span>
+      </div>
+      <div class="stat-value"><strong id="statHigh">--</strong><small>条</small></div>
+      <p class="stat-note" id="statHighNote">需重点防范的霜冻过程</p>
+    </article>
+    <article class="stat-card">
+      <div class="stat-top">
+        <span class="stat-label">最近 7 天</span>
+        <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M5 4.5h14a1.5 1.5 0 0 1 1.5 1.5v13A1.5 1.5 0 0 1 19 20.5H5A1.5 1.5 0 0 1 3.5 19V6A1.5 1.5 0 0 1 5 4.5Z"/><path d="M7.8 2.8v3.4M16.2 2.8v3.4M3.5 9.3h17" stroke-linecap="round"/></svg></span>
+      </div>
+      <div class="stat-value"><strong id="statWeek">--</strong><small>条</small></div>
+      <p class="stat-note" id="statWeekNote">按当前数据最新日期统计</p>
+    </article>
+    <article class="stat-card">
+      <div class="stat-top">
+        <span class="stat-label">历史最低温</span>
+        <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M9.3 13.8V5.6a2.7 2.7 0 0 1 5.4 0v8.2a4.8 4.8 0 1 1-5.4 0Z" stroke-linejoin="round"/><path d="M12 9v6.2" stroke-linecap="round"/><circle cx="12" cy="17.4" r="1.4" fill="currentColor" stroke="none"/></svg></span>
+      </div>
+      <div class="stat-value"><strong id="statMinTemp">--</strong><small>℃</small></div>
+      <p class="stat-note" id="statMinTempNote">当前筛选范围内的极值</p>
+    </article>
+  </section>
+
+  <section class="analysis-grid" aria-label="告警分析">
+    <article class="panel chart-panel">
+      <div class="panel-head">
+        <div class="panel-title">
+          <span class="p-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" stroke-linecap="round"/></svg></span>
+          <div><h2>最近一周告警次数</h2><p id="barSubtitle">按日统计 · 随筛选条件实时更新</p></div>
+        </div>
+        <span class="chart-note" id="barNote">近 7 日</span>
+      </div>
+      <div class="chart-host" id="barHost">
+        <div class="echarts-host" id="barChart"></div>
+        <div class="chart-fallback" id="barFallback">
+          <div class="fallback-bars" id="fallbackBars"></div>
+          <div class="fallback-labels" id="fallbackLabels"></div>
+        </div>
+        <div class="chart-loading" id="barLoading"><span class="mini-loader"></span>正在读取告警趋势…</div>
+        <div class="chart-empty" id="barEmpty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 3.8h14a1.4 1.4 0 0 1 1.4 1.4v13.6a1.4 1.4 0 0 1-1.4 1.4H5a1.4 1.4 0 0 1-1.4-1.4V5.2A1.4 1.4 0 0 1 5 3.8Z"/><path d="M8 9h8M8 12.5h5" stroke-linecap="round"/></svg>
+          <span>当前筛选范围暂无告警数据</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="panel chart-panel">
+      <div class="panel-head">
+        <div class="panel-title">
+          <span class="p-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3.5v8.2l6.3 3.7"/><circle cx="12" cy="12" r="8.5"/></svg></span>
+          <div><h2>各等级告警占比</h2><p>风险结构 · 动态分级统计</p></div>
+        </div>
+        <span class="chart-note">等级构成</span>
+      </div>
+      <div class="donut-layout">
+        <div class="chart-host donut-host" id="donutHost" style="height:100%;margin:0">
+          <div class="echarts-host" id="levelChart"></div>
+          <div class="chart-fallback" id="donutFallback">
+            <div class="fallback-pie-wrap">
+              <div class="fallback-donut" id="fallbackDonut">
+                <div class="fallback-donut-center"><strong id="fallbackDonutTotal">0</strong><span>告警总数</span></div>
+              </div>
+              <span class="fallback-pie-note">ECharts 加载中 · 已显示轻量图表</span>
+            </div>
+          </div>
+          <div class="chart-loading" id="donutLoading"><span class="mini-loader"></span>正在分析告警等级…</div>
+          <div class="chart-empty" id="donutEmpty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v8.2l6.3 3.7" stroke-linecap="round"/></svg>
+            <span>暂无可分析的等级数据</span>
+          </div>
+        </div>
+        <ul class="level-legend" id="levelLegend">
+          <li><span class="l-dot high"></span><span class="l-copy"><span>高风险</span><strong id="legendHigh">--</strong></span><span class="l-pct" id="legendHighPct">--</span></li>
+          <li><span class="l-dot mid"></span><span class="l-copy"><span>中风险</span><strong id="legendMid">--</strong></span><span class="l-pct" id="legendMidPct">--</span></li>
+          <li><span class="l-dot low"></span><span class="l-copy"><span>低风险</span><strong id="legendLow">--</strong></span><span class="l-pct" id="legendLowPct">--</span></li>
+        </ul>
+      </div>
+    </article>
+  </section>
+
+  <section class="panel table-panel" aria-label="告警明细表">
+    <div class="table-heading">
+      <h2>告警明细</h2>
+      <span class="count-pill" id="tableCount">共 0 条</span>
+      <span class="table-source demo" id="tableSource"><span class="t-dot"></span><span id="tableSourceText">本地 Mock 数据</span></span>
+    </div>
+
+    <div class="toolbar">
+      <div class="date-group">
+        <label class="date-field" for="dateFrom">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3.7" y="5" width="16.6" height="15.3" rx="2.2"/><path d="M7.5 3v4M16.5 3v4M3.7 9.8h16.6" stroke-linecap="round"/></svg>
+          <input type="date" id="dateFrom" aria-label="开始日期">
+        </label>
+        <span class="date-arrow">—</span>
+        <label class="date-field" for="dateTo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3.7" y="5" width="16.6" height="15.3" rx="2.2"/><path d="M7.5 3v4M16.5 3v4M3.7 9.8h16.6" stroke-linecap="round"/></svg>
+          <input type="date" id="dateTo" aria-label="结束日期">
+        </label>
+      </div>
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.4"/><path d="m15.6 15.6 4.1 4.1" stroke-linecap="round"/></svg>
+        <input type="search" id="searchInput" placeholder="搜索等级、日期或处置建议…" aria-label="关键字搜索" autocomplete="off">
+        <button type="button" class="clear-search" id="clearSearch" aria-label="清空搜索">×</button>
+      </div>
+      <div class="toolbar-spacer"></div>
+      <button type="button" class="reset-btn" id="resetBtn">重置筛选</button>
+      <button type="button" class="export-btn" id="exportBtn"><span class="btn-emoji" aria-hidden="true">📥</span><span>导出数据</span></button>
+    </div>
+
+    <div class="table-wrap">
+      <table aria-label="历史霜冻告警列表">
+        <thead>
+          <tr>
+            <th scope="col">告警时间</th>
+            <th scope="col">告警等级</th>
+            <th scope="col">最低气温</th>
+            <th scope="col">平均湿度</th>
+            <th scope="col">平均风速</th>
+            <th scope="col">处置建议</th>
+            <th scope="col" style="width:42px"></th>
+          </tr>
+        </thead>
+        <tbody id="alertTbody">
+          <tr class="skeleton-row"><td><span class="sk" style="width:105px"></span></td><td><span class="sk" style="width:55px"></span></td><td><span class="sk" style="width:48px"></span></td><td><span class="sk" style="width:43px"></span></td><td><span class="sk" style="width:54px"></span></td><td><span class="sk" style="width:160px"></span></td><td></td></tr>
+          <tr class="skeleton-row"><td><span class="sk" style="width:98px"></span></td><td><span class="sk" style="width:48px"></span></td><td><span class="sk" style="width:42px"></span></td><td><span class="sk" style="width:48px"></span></td><td><span class="sk" style="width:48px"></span></td><td><span class="sk" style="width:140px"></span></td><td></td></tr>
+          <tr class="skeleton-row"><td><span class="sk" style="width:110px"></span></td><td><span class="sk" style="width:51px"></span></td><td><span class="sk" style="width:45px"></span></td><td><span class="sk" style="width:44px"></span></td><td><span class="sk" style="width:51px"></span></td><td><span class="sk" style="width:172px"></span></td><td></td></tr>
+          <tr class="skeleton-row"><td><span class="sk" style="width:96px"></span></td><td><span class="sk" style="width:54px"></span></td><td><span class="sk" style="width:40px"></span></td><td><span class="sk" style="width:45px"></span></td><td><span class="sk" style="width:47px"></span></td><td><span class="sk" style="width:150px"></span></td><td></td></tr>
+        </tbody>
+      </table>
+      <div class="empty-state" id="emptyState">
+        <div class="empty-art"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3.8h8.8L19 8v12.2H6Z" stroke-linejoin="round"/><path d="M14.5 3.9V8H19M9 12h6M9 15.5h4" stroke-linecap="round"/></svg></div>
+        <strong>没有找到匹配的告警记录</strong>
+        <p>试着调整日期范围或清除关键字，再看看茶园的这段温度故事。</p>
+      </div>
+    </div>
+
+    <div class="table-footer">
+      <span class="footer-info" id="footerInfo">正在读取告警档案…</span>
+      <div class="pagination" aria-label="表格分页">
+        <button type="button" class="page-btn" id="prevPage" aria-label="上一页" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m15 6-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <span class="page-indicator" id="pageIndicator">1 / 1</span>
+        <button type="button" class="page-btn" id="nextPage" aria-label="下一页" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 6 6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+    </div>
+  </section>
+
+  <footer class="page-foot">
+    <span><i class="fdot"></i>前端演示模式 · <b>本地 Mock 数据</b> · 页面每 60 秒自动刷新</span>
+    <span>告警导出由 SheetJS 提供支持 · 图表由 ECharts 渲染</span>
+  </footer>
+</main>
+
+<div class="modal" id="detailModal" role="dialog" aria-modal="true" aria-labelledby="detailTitle" aria-hidden="true">
+  <div class="modal-card">
+    <button type="button" class="modal-close" id="modalClose" aria-label="关闭详情">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>
+    </button>
+    <div class="modal-top">
+      <div class="modal-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3.4 3.9 18.1a2 2 0 0 0 1.8 3h12.6a2 2 0 0 0 1.8-3L12 3.4Z" stroke-linejoin="round"/><path d="M12 9.1v4.2M12 16.5v.2" stroke-linecap="round"/></svg></div>
+      <div><h3 id="detailTitle">霜冻告警详情</h3><p id="detailSubtitle">茶园 TEA-03 · 微气候记录</p></div>
+    </div>
+    <div class="detail-grid">
+      <div class="detail-cell"><span>告警时间</span><strong id="detailTime">--</strong></div>
+      <div class="detail-cell"><span>告警等级</span><strong id="detailLevel">--</strong></div>
+      <div class="detail-cell"><span>最低气温</span><strong id="detailTemp">--</strong></div>
+      <div class="detail-cell"><span>平均湿度</span><strong id="detailHumidity">--</strong></div>
+      <div class="detail-cell"><span>平均风速</span><strong id="detailWind">--</strong></div>
+      <div class="detail-cell"><span>霜冻临界</span><strong>3.0 ℃</strong></div>
+    </div>
+    <div class="modal-advice"><span>茶园处置建议</span><p id="detailAdvice">--</p></div>
+    <div class="modal-actions">
+      <button type="button" class="modal-cancel" id="modalCancel">关闭详情</button>
+      <button type="button" class="modal-confirm" id="modalCopy">复制记录</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var AUTH_KEY = 'tea_user';
+  var NAME_PREFIX = 'tea_auth:';
+  var PAGE_SIZE = 8;
+  var state = {
+    rows: [],
+    filtered: [],
+    source: 'loading',
+    page: 1,
+    dataLoaded: false,
+    loading: false,
+    barData: null,
+    levelData: null,
+    barChart: null,
+    levelChart: null,
+    chartLibraryReady: false,
+    barAnchorText: '',
+    selectedAlert: null
+  };
+  var searchTimer = null;
+  var refreshTimer = null;
+  var lastFocus = null;
+
+  /* ---------- 登录拦截 ---------- */
+  function readLocalUser() {
+    try {
+      var raw = localStorage.getItem(AUTH_KEY);
+      var user = raw ? JSON.parse(raw) : null;
+      return user && user.username ? user : null;
+    } catch (err) { return null; }
+  }
+  function readNameUser() {
+    try {
+      var raw = window.name || '';
+      if (raw.indexOf(NAME_PREFIX) !== 0) return null;
+      var user = JSON.parse(decodeURIComponent(raw.slice(NAME_PREFIX.length)));
+      return user && user.username ? user : null;
+    } catch (err) { return null; }
+  }
+  var embedded = false;
+  try { embedded = window.self !== window.top; } catch (err) { embedded = true; }
+  var currentUser = readLocalUser() || readNameUser();
+  if (!currentUser && !embedded) {
+    window.location.replace('index.html');
+    return;
+  }
+  if (currentUser) {
+    try { localStorage.setItem(AUTH_KEY, JSON.stringify(currentUser)); } catch (err) {}
+  }
+  document.body.classList.add('is-ready');
+  window.addEventListener('message', function (event) {
+    var data = event && event.data;
+    if (data && data.type === 'tea:auth' && data.user && data.user.username) {
+      try { localStorage.setItem(AUTH_KEY, JSON.stringify(data.user)); } catch (err) {}
+    }
+  });
+
+  /* ---------- 工具 ---------- */
+  var weekdaysShort = ['周日','周一','周二','周三','周四','周五','周六'];
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function setText(id, text) {
+    var node = document.getElementById(id);
+    if (node) node.textContent = text;
+  }
+  function fixed(value, digits) {
+    var number = Number(value);
+    if (!Number.isFinite(number)) return '--';
+    return number.toFixed(digits == null ? 1 : digits);
+  }
+  function escapeHtml(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function (char) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char];
+    });
+  }
+  var MONTH_MAP = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
+  function parseDate(value) {
+    if (!value) return null;
+    if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
+    var text = String(value).trim();
+    // 兼容历史数据中 RFC 2822 格式的时间字符串，
+    // 按本地墙上时间还原，防止历史告警时间整体偏移 8 小时。
+    var rfc = text.match(/^[A-Za-z]{3},\s+(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})\s+(\d{2}):(\d{2}):(\d{2})\s+GMT$/i);
+    if (rfc && MONTH_MAP[rfc[2].slice(0, 1).toUpperCase() + rfc[2].slice(1, 3).toLowerCase()] != null) {
+      var month = MONTH_MAP[rfc[2].slice(0, 1).toUpperCase() + rfc[2].slice(1, 3).toLowerCase()];
+      var localDate = new Date(Number(rfc[3]), month, Number(rfc[1]), Number(rfc[4]), Number(rfc[5]), Number(rfc[6]));
+      if (!isNaN(localDate.getTime())) return localDate;
+    }
+    var date = new Date(text.replace(' ', 'T'));
+    if (!isNaN(date.getTime())) return date;
+    date = new Date(text);
+    return isNaN(date.getTime()) ? null : date;
+  }
+  function fmtDateTime(date) {
+    if (!date) return '--';
+    return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + ' ' + pad(date.getHours()) + ':' + pad(date.getMinutes());
+  }
+  function fmtShortDate(date) {
+    if (!date) return '--';
+    return pad(date.getMonth() + 1) + '/' + pad(date.getDate());
+  }
+  function dateKey(date) {
+    if (!date) return '';
+    return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate());
+  }
+  function startOfDay(date) {
+    var d = new Date(date.getTime());
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+  function toast(type, title, message) {
+    var stack = document.getElementById('toastStack');
+    var icons = {
+      success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+      error: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4.5M12 16.4v.4"/></svg>',
+      info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.2"/></svg>'
+    };
+    var node = document.createElement('div');
+    node.className = 'toast ' + (type || 'info');
+    node.innerHTML = '<span class="t-icon">' + (icons[type] || icons.info) + '</span><div><strong></strong><p></p></div><button type="button" class="t-close" aria-label="关闭">×</button>';
+    node.querySelector('strong').textContent = title;
+    node.querySelector('p').textContent = message;
+    stack.appendChild(node);
+    var close = function () {
+      if (node.classList.contains('leaving')) return;
+      node.classList.add('leaving');
+      setTimeout(function () { node.remove(); }, 230);
+    };
+    node.querySelector('.t-close').addEventListener('click', close);
+    setTimeout(close, 3700);
+  }
+
+  /* ---------- 数据规整（纯本地，无后端请求） ---------- */
+  function levelInfo(raw) {
+    var text = String(raw == null ? '' : raw).trim();
+    var numeric = Number(text);
+    if (/严重|重度|高危|高风险|红色|危险|特重/.test(text) || (Number.isFinite(numeric) && numeric >= 3)) {
+      return { key: 'high', label: /^\d+$/.test(text) || !text ? '高风险' : text };
+    }
+    if (/中度|中危|中风险|橙色|黄色|注意/.test(text) || (Number.isFinite(numeric) && numeric === 2)) {
+      return { key: 'mid', label: /^\d+$/.test(text) || !text ? '中风险' : text };
+    }
+    if (/轻度|低危|低风险|蓝色|安全|无霜冻|无/.test(text) || (Number.isFinite(numeric) && numeric <= 1)) {
+      return { key: 'low', label: /^\d+$/.test(text) || !text ? '低风险' : text };
+    }
+    return { key: 'unknown', label: text || '未分级' };
+  }
+
+  function adviceFor(key) {
+    if (key === 'high') return '立即落实覆盖、熏烟等防冻措施，暂停采摘与修剪，重点保护幼嫩茶篷。';
+    if (key === 'mid') return '关注凌晨 2–5 点低温时段，提前检查防霜物资，保持土壤适度湿润。';
+    if (key === 'low') return '保持日常巡园与通风排水，睡前复看一次实时温度即可。';
+    return '请结合当日微气候与茶园实际情况，做好巡园和防冻物资检查。';
+  }
+
+  function normalizeRows(rawRows) {
+    return rawRows.map(function (item) {
+      if (!item || typeof item !== 'object') return null;
+      var rawTime = item.alert_time || item.time || item.created_at || item.datetime || item.date;
+      var date = parseDate(rawTime);
+      if (!date) return null;
+      var rawLevel = item.alert_level || item.level || item.risk_level || item.level_name;
+      var level = levelInfo(rawLevel);
+      var tempRaw = item.min_temp != null ? item.min_temp : item.min_temperature != null ? item.min_temperature : item.temperature != null ? item.temperature : item.temp;
+      var humidityRaw = item.avg_humidity != null ? item.avg_humidity : item.humidity != null ? item.humidity : item.relative_humidity;
+      var windRaw = item.avg_wind_speed != null ? item.avg_wind_speed : item.wind_speed != null ? item.wind_speed : item.wind;
+      var temp = Number(tempRaw);
+      var humidity = Number(humidityRaw);
+      var wind = Number(windRaw);
+      return {
+        raw: item,
+        date: date,
+        timeText: fmtDateTime(date),
+        levelKey: level.key,
+        levelLabel: level.label,
+        levelRaw: rawLevel == null ? '' : String(rawLevel),
+        temp: Number.isFinite(temp) ? temp : null,
+        humidity: Number.isFinite(humidity) ? Math.max(0, Math.min(100, humidity)) : null,
+        wind: Number.isFinite(wind) ? wind : null,
+        advice: adviceFor(level.key)
+      };
+    }).filter(Boolean).sort(function (a, b) { return b.date - a.date; });
+  }
+
+  /* ---------- 演示数据 ---------- */
+  function buildDemoRows() {
+    var now = new Date();
+    var specs = [
+      { d: 1, h: 3, m: 20, temp: 0.6, hum: 91, wind: 1.8, level: '重度霜冻' },
+      { d: 1, h: 23, m: 50, temp: 2.2, hum: 88, wind: 2.2, level: '中度霜冻' },
+      { d: 2, h: 2, m: 10, temp: 0.8, hum: 92, wind: 1.5, level: '重度霜冻' },
+      { d: 2, h: 4, m: 10, temp: -0.4, hum: 93, wind: 1.4, level: '重度霜冻' },
+      { d: 2, h: 22, m: 35, temp: 4.1, hum: 82, wind: 3.1, level: '轻度霜冻' },
+      { d: 3, h: 5, m: 0, temp: 5.3, hum: 79, wind: 3.8, level: '轻度霜冻' },
+      { d: 3, h: 23, m: 10, temp: 3.4, hum: 86, wind: 2.4, level: '中度霜冻' },
+      { d: 4, h: 2, m: 20, temp: 1.4, hum: 90, wind: 1.8, level: '重度霜冻' },
+      { d: 4, h: 3, m: 35, temp: 2.1, hum: 90, wind: 1.9, level: '中度霜冻' },
+      { d: 4, h: 4, m: 40, temp: 1.2, hum: 92, wind: 1.6, level: '重度霜冻' },
+      { d: 4, h: 23, m: 30, temp: 3.6, hum: 85, wind: 2.5, level: '中度霜冻' },
+      { d: 5, h: 5, m: 10, temp: 6.1, hum: 77, wind: 4.2, level: '轻度霜冻' },
+      { d: 5, h: 23, m: 30, temp: 3.8, hum: 84, wind: 2.6, level: '轻度霜冻' },
+      { d: 6, h: 2, m: 30, temp: 2.0, hum: 88, wind: 1.9, level: '中度霜冻' },
+      { d: 6, h: 3, m: 45, temp: 2.8, hum: 87, wind: 2.0, level: '中度霜冻' },
+      { d: 6, h: 22, m: 20, temp: 5.2, hum: 81, wind: 3.4, level: '轻度霜冻' },
+      { d: 7, h: 4, m: 15, temp: 1.7, hum: 89, wind: 1.7, level: '重度霜冻' },
+      { d: 8, h: 3, m: 5, temp: 0.9, hum: 94, wind: 1.2, level: '重度霜冻' },
+      { d: 8, h: 23, m: 45, temp: 4.7, hum: 83, wind: 3.0, level: '轻度霜冻' },
+      { d: 9, h: 5, m: 20, temp: 6.4, hum: 76, wind: 4.8, level: '轻度霜冻' },
+      { d: 10, h: 4, m: 30, temp: 3.0, hum: 85, wind: 2.3, level: '中度霜冻' },
+      { d: 11, h: 2, m: 55, temp: 0.2, hum: 92, wind: 1.5, level: '重度霜冻' },
+      { d: 12, h: 4, m: 5, temp: 2.6, hum: 88, wind: 2.1, level: '中度霜冻' }
+    ];
+    return normalizeRows(specs.map(function (spec) {
+      var d = new Date(now.getTime() - spec.d * 24 * 60 * 60 * 1000);
+      d.setHours(spec.h, spec.m, 0, 0);
+      var time = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':00';
+      return {
+        alert_time: time,
+        alert_level: spec.level,
+        min_temp: spec.temp,
+        avg_humidity: spec.hum,
+        avg_wind_speed: spec.wind
+      };
+    }));
+  }
+
+  function sourceUI() {
+    var pill = document.getElementById('sourcePill');
+    var pillText = document.getElementById('sourcePillText');
+    var tableSource = document.getElementById('tableSource');
+    var tableSourceText = document.getElementById('tableSourceText');
+    var notice = document.getElementById('dataNotice');
+    if (pill) { pill.classList.remove('live'); pill.classList.add('demo'); }
+    if (pillText) pillText.textContent = '当前为前端演示模式';
+    if (tableSource) { tableSource.classList.remove('live'); tableSource.classList.add('demo'); }
+    if (tableSourceText) tableSourceText.textContent = '本地 Mock 数据';
+    if (notice) notice.classList.remove('show');
+  }
+
+  /* ---------- 过滤与分页 ---------- */
+  function getFilters() {
+    return {
+      from: document.getElementById('dateFrom').value,
+      to: document.getElementById('dateTo').value,
+      keyword: document.getElementById('searchInput').value.trim().toLowerCase()
+    };
+  }
+
+  function filterRows() {
+    var filters = getFilters();
+    var fromDate = filters.from ? startOfDay(new Date(filters.from + 'T00:00:00')) : null;
+    var toDate = filters.to ? new Date(filters.to + 'T23:59:59') : null;
+    return state.rows.filter(function (row) {
+      if (fromDate && row.date < fromDate) return false;
+      if (toDate && row.date > toDate) return false;
+      if (filters.keyword) {
+        var haystack = [
+          row.timeText,
+          row.levelLabel,
+          row.levelRaw,
+          row.temp == null ? '' : row.temp,
+          row.humidity == null ? '' : row.humidity,
+          row.wind == null ? '' : row.wind,
+          row.advice
+        ].join(' ').toLowerCase();
+        if (haystack.indexOf(filters.keyword) === -1) return false;
+      }
+      return true;
+    });
+  }
+
+  function renderStats() {
+    var rows = state.filtered;
+    var high = rows.filter(function (row) { return row.levelKey === 'high'; }).length;
+    var latestDate = rows.length ? rows.reduce(function (latest, row) { return row.date > latest ? row.date : latest; }, rows[0].date) : new Date();
+    var weekStart = startOfDay(new Date(latestDate.getTime() - 6 * 86400000));
+    var weekEnd = new Date(latestDate.getTime() + 86400000);
+    var weekCount = rows.filter(function (row) { return row.date >= weekStart && row.date < weekEnd; }).length;
+    var temps = rows.map(function (row) { return row.temp; }).filter(function (value) { return value != null; });
+    var minTemp = temps.length ? Math.min.apply(null, temps) : null;
+
+    setText('statTotal', String(rows.length));
+    setText('statHigh', String(high));
+    setText('statWeek', String(weekCount));
+    setText('statMinTemp', minTemp == null ? '--' : minTemp.toFixed(1));
+    setText('statTotalNote', '当前筛选范围内的告警记录');
+    setText('statHighNote', high ? '需要优先复查的霜冻过程' : '当前范围暂无高风险记录');
+    setText('statWeekNote', rows.length ? '以最新告警日 ' + fmtShortDate(latestDate) + ' 为基准' : '当前筛选范围暂无数据');
+    setText('statMinTempNote', temps.length ? '筛选范围内出现的最低气温' : '暂无温度数据');
+  }
+
+  /* ---------- 图表数据 ---------- */
+  function buildChartData() {
+    var rows = state.filtered;
+    var latest = rows.length ? rows.reduce(function (max, row) { return row.date > max ? row.date : max; }, rows[0].date) : new Date();
+    var today = new Date();
+    var hasRecent = rows.some(function (row) {
+      return row.date >= new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6) && row.date <= new Date(today.getTime() + 86400000);
+    });
+    var anchor = startOfDay(hasRecent ? today : latest);
+    var days = [];
+    for (var i = 6; i >= 0; i--) {
+      var d = new Date(anchor.getTime() - i * 86400000);
+      var key = dateKey(d);
+      var count = rows.filter(function (row) { return dateKey(row.date) === key; }).length;
+      days.push({ date: d, count: count, label: weekdaysShort[d.getDay()], short: fmtShortDate(d) });
+    }
+    var levels = [
+      { key: 'high', label: '高风险', count: 0, color: '#c16b59' },
+      { key: 'mid', label: '中风险', count: 0, color: '#c79b4c' },
+      { key: 'low', label: '低风险', count: 0, color: '#4d9665' }
+    ];
+    rows.forEach(function (row) {
+      var target = levels.filter(function (level) { return level.key === (row.levelKey === 'unknown' ? 'low' : row.levelKey); })[0];
+      if (target) target.count += 1;
+    });
+    state.barData = days;
+    state.levelData = levels;
+    state.barAnchorText = '基准 ' + fmtShortDate(anchor);
+    var isAnchoredToLatest = anchor.getTime() !== startOfDay(today).getTime();
+    setText('barNote', '近 7 日 · ' + state.barAnchorText);
+    setText('barSubtitle', isAnchoredToLatest ? '按日统计 · 当前筛选无近 7 日数据，以最新告警日为基准' : '按日统计 · 随筛选条件实时更新');
+    var total = rows.length;
+    levels.forEach(function (level) {
+      var percent = total ? Math.round(level.count / total * 100) : 0;
+      var keyName = level.key.charAt(0).toUpperCase() + level.key.slice(1);
+      setText('legend' + keyName, String(level.count) + ' 条');
+      setText('legend' + keyName + 'Pct', percent + '%');
+    });
+  }
+
+  function setChartLoading(done) {
+    ['barLoading', 'donutLoading'].forEach(function (id) {
+      var node = document.getElementById(id);
+      if (node) node.classList.toggle('hidden', !!done);
+    });
+  }
+
+  function hideChartEmpty() {
+    ['barEmpty', 'donutEmpty'].forEach(function (id) {
+      var node = document.getElementById(id);
+      if (node) node.classList.remove('show');
+    });
+  }
+
+  function chartOptions() {
+    var bar = state.barData || [];
+    var levels = state.levelData || [];
+    var total = state.filtered.length;
+    return {
+      bar: {
+        animationDuration: 750,
+        animationEasing: 'cubicOut',
+        grid: { left: 14, right: 18, top: 24, bottom: 22, containLabel: true },
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: { type: 'shadow', shadowStyle: { color: 'rgba(88,142,102,.06)' } },
+          backgroundColor: 'rgba(25,58,38,.94)',
+          borderWidth: 0,
+          padding: [7, 10],
+          textStyle: { color: '#f2f9f1', fontSize: 11 },
+          formatter: function (params) {
+            var p = params[0];
+            var item = bar[p.dataIndex];
+            if (!item) return '';
+            return '<b>' + item.short + ' ' + item.label + '</b><br/>告警次数：' + item.count + ' 次';
+          }
+        },
+        xAxis: {
+          type: 'category',
+          data: bar.map(function (item) { return item.short; }),
+          axisLine: { lineStyle: { color: 'rgba(44,91,60,.1)' } },
+          axisTick: { show: false },
+          axisLabel: { color: '#83998a', fontSize: 10, margin: 10, interval: 0, fontFamily: 'Avenir Next, PingFang SC, sans-serif' }
+        },
+        yAxis: {
+          type: 'value',
+          minInterval: 1,
+          splitNumber: 3,
+          axisLabel: { color: '#8fa294', fontSize: 10, fontFamily: 'Avenir Next, PingFang SC, sans-serif' },
+          splitLine: { lineStyle: { color: 'rgba(40,86,56,.08)', type: 'dashed' } },
+          axisLine: { show: false },
+          axisTick: { show: false }
+        },
+        series: [{
+          name: '告警次数',
+          type: 'bar',
+          data: bar.map(function (item) { return item.count; }),
+          barWidth: '34%',
+          itemStyle: {
+            borderRadius: [7, 7, 2, 2],
+            color: (function () {
+              if (!window.echarts) return '#5a9b6f';
+              return new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: '#91c39d' },
+                { offset: 1, color: '#3d8059' }
+              ]);
+            })()
+          },
+          emphasis: {
+            itemStyle: {
+              color: (function () {
+                if (!window.echarts) return '#3b7f57';
+                return new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                  { offset: 0, color: '#6eaa7e' },
+                  { offset: 1, color: '#286344' }
+                ]);
+              })()
+            }
+          },
+          label: {
+            show: total > 0,
+            position: 'top',
+            color: '#6f8d78',
+            fontSize: 10,
+            formatter: function (params) { return params.value > 0 ? params.value : ''; }
+          }
+        }]
+      },
+      donut: {
+        animationDuration: 800,
+        tooltip: {
+          trigger: 'item',
+          backgroundColor: 'rgba(25,58,38,.94)',
+          borderWidth: 0,
+          padding: [7, 10],
+          textStyle: { color: '#f2f9f1', fontSize: 11 },
+          formatter: function (params) { return params.name + '：' + params.value + ' 条（' + params.percent + '%）'; }
+        },
+        title: {
+          text: total ? String(total) : '0',
+          subtext: '总告警',
+          left: 'center',
+          top: '35%',
+          textStyle: { fontFamily: 'Avenir Next, PingFang SC, sans-serif', fontSize: 26, fontWeight: 700, color: '#315f42' },
+          subtextStyle: { fontFamily: 'Avenir Next, PingFang SC, sans-serif', fontSize: 8, color: '#97a89b', lineHeight: 15 }
+        },
+        series: [{
+          name: '告警等级',
+          type: 'pie',
+          radius: ['57%', '77%'],
+          center: ['50%', '48%'],
+          avoidLabelOverlap: true,
+          padAngle: 2,
+          itemStyle: { borderRadius: 5, borderColor: '#fffef9', borderWidth: 3 },
+          label: { show: false },
+          labelLine: { show: false },
+          emphasis: { scale: true, scaleSize: 4, label: { show: false } },
+          data: levels.map(function (level) {
+            return { name: level.label, value: level.count, itemStyle: { color: level.color } };
+          }).filter(function (item) { return item.value > 0; })
+        }]
+      }
+    };
+  }
+
+  function renderFallbackCharts() {
+    var barHost = document.getElementById('barFallback');
+    var donutHost = document.getElementById('donutFallback');
+    var bars = document.getElementById('fallbackBars');
+    var labels = document.getElementById('fallbackLabels');
+    var bar = state.barData || [];
+    var max = Math.max.apply(null, bar.map(function (item) { return item.count; }).concat([1]));
+    if (bars && labels) {
+      bars.innerHTML = bar.map(function (item) {
+        var height = Math.max(4, Math.round(item.count / max * 118));
+        return '<div class="fb-col"><span class="fb-value">' + item.count + '</span><span class="fb-bar" style="height:' + height + 'px"></span></div>';
+      }).join('');
+      labels.innerHTML = bar.map(function (item) { return '<span>' + item.short + '</span>'; }).join('');
+    }
+    if (barHost) barHost.classList.add('show');
+    var levels = state.levelData || [];
+    var total = state.filtered.length;
+    var high = levels[0] ? levels[0].count : 0;
+    var mid = levels[1] ? levels[1].count : 0;
+    var low = levels[2] ? levels[2].count : 0;
+    var a = total ? (high / total * 100) : 0;
+    var b = total ? (a + mid / total * 100) : 0;
+    var donut = document.getElementById('fallbackDonut');
+    if (donut) {
+      if (total === 0) donut.style.background = '#edf3e9';
+      else if (high === 0 && mid === 0) donut.style.background = '#4d9665';
+      else if (high === 0) donut.style.background = 'conic-gradient(#4d9665 0 ' + (100 - (mid / total * 100)).toFixed(1) + '%,#c79b4c ' + (100 - (mid / total * 100)).toFixed(1) + '% 100%)';
+      else donut.style.background = 'conic-gradient(#c16b59 0 ' + a.toFixed(1) + '%,#c79b4c ' + a.toFixed(1) + '% ' + b.toFixed(1) + '%,#4d9665 ' + b.toFixed(1) + '% 100%)';
+    }
+    setText('fallbackDonutTotal', String(total));
+    if (donutHost) donutHost.classList.add('show');
+  }
+
+  function renderECharts() {
+    if (!window.echarts) return false;
+    var barEl = document.getElementById('barChart');
+    var levelEl = document.getElementById('levelChart');
+    if (!barEl || !levelEl) return false;
+    if (!state.barChart || state.barChart.isDisposed && state.barChart.isDisposed()) {
+      state.barChart = echarts.init(barEl, null, { renderer: 'canvas' });
+    }
+    if (!state.levelChart || state.levelChart.isDisposed && state.levelChart.isDisposed()) {
+      state.levelChart = echarts.init(levelEl, null, { renderer: 'canvas' });
+    }
+    var options = chartOptions();
+    state.barChart.setOption(options.bar, true);
+    state.levelChart.setOption(options.donut, true);
+    document.getElementById('barFallback').classList.remove('show');
+    document.getElementById('donutFallback').classList.remove('show');
+    hideChartEmpty();
+    return true;
+  }
+
+  function renderCharts() {
+    if (!state.dataLoaded) return;
+    hideChartEmpty();
+    var total = state.filtered.length;
+    if (!total) {
+      document.getElementById('barEmpty').classList.add('show');
+      document.getElementById('donutEmpty').classList.add('show');
+      document.getElementById('barFallback').classList.remove('show');
+      document.getElementById('donutFallback').classList.remove('show');
+    } else if (!renderECharts()) {
+      renderFallbackCharts();
+    }
+    setChartLoading(true);
+  }
+
+  window.__historyEChartsLoaded = function () {
+    state.chartLibraryReady = true;
+    if (state.dataLoaded) renderCharts();
+  };
+  if (window.echarts) {
+    state.chartLibraryReady = true;
+  }
+  window.addEventListener('resize', function () {
+    if (state.barChart) state.barChart.resize();
+    if (state.levelChart) state.levelChart.resize();
+  });
+
+  /* ---------- 表格渲染 ---------- */
+  function renderTable() {
+    var tbody = document.getElementById('alertTbody');
+    var empty = document.getElementById('emptyState');
+    var rows = state.filtered;
+    var pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+    if (state.page > pageCount) state.page = pageCount;
+    var start = (state.page - 1) * PAGE_SIZE;
+    var pageRows = rows.slice(start, start + PAGE_SIZE);
+    setText('tableCount', '共 ' + rows.length + ' 条');
+    setText('footerInfo', rows.length
+      ? '显示第 ' + (start + 1) + '–' + (start + pageRows.length) + ' 条，共 ' + rows.length + ' 条记录'
+      : '当前筛选范围共 0 条记录');
+    setText('pageIndicator', state.page + ' / ' + pageCount);
+    var prev = document.getElementById('prevPage');
+    var next = document.getElementById('nextPage');
+    if (prev) prev.disabled = state.page <= 1;
+    if (next) next.disabled = state.page >= pageCount;
+    if (empty) empty.classList.toggle('show', !rows.length);
+    var table = tbody ? tbody.closest('table') : null;
+    if (table) table.style.display = rows.length ? '' : 'none';
+    if (!tbody) return;
+    if (!rows.length) {
+      tbody.innerHTML = '';
+      return;
+    }
+    tbody.innerHTML = pageRows.map(function (row, index) {
+      var tempClass = row.temp != null && row.temp <= 3 ? 'cold' : row.temp != null && row.temp <= 8 ? 'cool' : '';
+      var tempWidth = row.temp == null ? 8 : Math.max(8, Math.min(100, ((row.temp + 5) / 25) * 100));
+      var levelClass = ['high', 'mid', 'low'].indexOf(row.levelKey) > -1 ? row.levelKey : 'unknown';
+      var rowIndex = rows.indexOf(row);
+      return '<tr>' +
+        '<td><span class="time-cell"><span class="clock-dot"></span>' + escapeHtml(row.timeText) + '</span></td>' +
+        '<td><span class="level-badge ' + levelClass + '"><span class="lvl-dot"></span>' + escapeHtml(row.levelLabel) + '</span></td>' +
+        '<td><span class="temp-cell ' + tempClass + '"><strong>' + (row.temp == null ? '--' : (row.temp > 0 ? '+' : '') + row.temp.toFixed(1)) + '℃</strong><span class="temp-bar"><i style="width:' + tempWidth.toFixed(0) + '%"></i></span></span></td>' +
+        '<td><span class="humidity-cell"><span>' + (row.humidity == null ? '--' : row.humidity.toFixed(0) + '%') + '</span><span class="hum-bar"><i style="width:' + (row.humidity == null ? 0 : row.humidity) + '%"></i></span></span></td>' +
+        '<td>' + (row.wind == null ? '--' : row.wind.toFixed(1) + ' km/h') + '</td>' +
+        '<td><span class="advice-cell" title="' + escapeHtml(row.advice) + '">' + escapeHtml(row.advice) + '</span></td>' +
+        '<td><button type="button" class="detail-btn" data-row="' + rowIndex + '" aria-label="查看告警详情"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  function renderAll() {
+    renderStats();
+    buildChartData();
+    renderCharts();
+    renderTable();
+  }
+
+  function applyFilters(resetPage) {
+    if (resetPage !== false) state.page = 1;
+    state.filtered = filterRows();
+    renderAll();
+    var clear = document.getElementById('clearSearch');
+    if (clear) clear.classList.toggle('show', !!document.getElementById('searchInput').value);
+  }
+
+  /* ---------- 加载本地演示数据 ---------- */
+  function setLoading(loading) {
+    state.loading = loading;
+    var btn = document.getElementById('refreshBtn');
+    if (btn) btn.classList.toggle('loading', loading);
+    if (btn) btn.disabled = loading;
+    setChartLoading(false);
+  }
+
+  function loadAlerts(isManual) {
+    if (state.loading) return;
+    setLoading(true);
+    setTimeout(function () {
+      var rows = buildDemoRows();
+      state.rows = rows;
+      state.source = 'demo';
+      state.dataLoaded = true;
+      sourceUI();
+      state.lastLoadedAt = Date.now();
+      setLoading(false);
+      applyFilters();
+      setChartLoading(true);
+      if (isManual) toast('success', '演示告警已刷新', '已重新生成 ' + rows.length + ' 条本地 Mock 告警记录。');
+    }, 260);
+  }
+
+  /* ---------- 详情弹窗 ---------- */
+  function openDetail(row) {
+    if (!row) return;
+    state.selectedAlert = row;
+    lastFocus = document.activeElement;
+    setText('detailTime', row.timeText);
+    setText('detailLevel', row.levelLabel);
+    setText('detailTemp', row.temp == null ? '--' : row.temp.toFixed(1) + ' ℃');
+    setText('detailHumidity', row.humidity == null ? '--' : row.humidity.toFixed(0) + ' %');
+    setText('detailWind', row.wind == null ? '--' : row.wind.toFixed(1) + ' km/h');
+    setText('detailAdvice', row.advice + ' 霜冻临界温度为 3℃，建议结合当夜实测温度及时调整措施。');
+    var modal = document.getElementById('detailModal');
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    setTimeout(function () { document.getElementById('modalClose').focus(); }, 80);
+  }
+  function closeDetail() {
+    var modal = document.getElementById('detailModal');
+    if (!modal.classList.contains('open')) return;
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    if (lastFocus && lastFocus.focus) {
+      try { lastFocus.focus(); } catch (err) {}
+    }
+  }
+
+  document.getElementById('alertTbody').addEventListener('click', function (event) {
+    var btn = event.target.closest('.detail-btn');
+    if (!btn) return;
+    var index = Number(btn.getAttribute('data-row'));
+    if (Number.isFinite(index) && state.filtered[index]) openDetail(state.filtered[index]);
+  });
+  document.getElementById('modalClose').addEventListener('click', closeDetail);
+  document.getElementById('modalCancel').addEventListener('click', closeDetail);
+  document.getElementById('detailModal').addEventListener('click', function (event) {
+    if (event.target === this) closeDetail();
+  });
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') closeDetail();
+    if (event.key === 'Tab') {
+      var modal = document.getElementById('detailModal');
+      if (!modal.classList.contains('open')) return;
+      var focusables = modal.querySelectorAll('button');
+      if (!focusables.length) return;
+      var first = focusables[0], last = focusables[focusables.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    }
+  });
+  document.getElementById('modalCopy').addEventListener('click', function () {
+    var row = state.selectedAlert;
+    if (!row) return;
+    var text = '茶园霜冻告警\n时间：' + row.timeText + '\n等级：' + row.levelLabel + '\n最低气温：' + (row.temp == null ? '--' : row.temp.toFixed(1) + '℃') + '\n平均湿度：' + (row.humidity == null ? '--' : row.humidity.toFixed(0) + '%') + '\n平均风速：' + (row.wind == null ? '--' : row.wind.toFixed(1) + 'km/h') + '\n建议：' + row.advice;
+    function done() { toast('success', '记录已复制', '告警记录已复制到剪贴板。'); }
+    function fail() {
+      var helper = document.createElement('textarea');
+      helper.value = text;
+      document.body.appendChild(helper);
+      helper.select();
+      try { document.execCommand('copy'); done(); } catch (err) { toast('error', '复制失败', '当前浏览器不支持剪贴板操作。'); }
+      helper.remove();
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(fail);
+    } else fail();
+  });
+
+  /* ---------- 导出 CSV ---------- */
+  function csvEscape(value) {
+    var text = String(value == null ? '' : value);
+    if (/[",\r\n]/.test(text)) return '"' + text.replace(/"/g, '""') + '"';
+    return text;
+  }
+  function downloadBlob(content, filename) {
+    var blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1200);
+  }
+  function exportCSV() {
+    var rows = state.filtered;
+    if (!rows.length) {
+      toast('error', '没有可导出的数据', '请先调整日期范围或清除搜索关键字。');
+      return;
+    }
+    var btn = document.getElementById('exportBtn');
+    btn.classList.add('loading');
+    var headers = ['序号', '告警时间', '告警等级', '最低气温(℃)', '平均湿度(%)', '平均风速(km/h)', '处置建议'];
+    var data = rows.map(function (row, index) {
+      return [
+        index + 1,
+        row.timeText,
+        row.levelLabel,
+        row.temp == null ? '' : row.temp.toFixed(1),
+        row.humidity == null ? '' : row.humidity.toFixed(0),
+        row.wind == null ? '' : row.wind.toFixed(1),
+        row.advice
+      ];
+    });
+    var csv;
+    var engine = '原生 CSV';
+    try {
+      if (window.XLSX && window.XLSX.utils) {
+        var worksheet = XLSX.utils.aoa_to_sheet([headers].concat(data));
+        csv = '\uFEFF' + XLSX.utils.sheet_to_csv(worksheet, { FS: ',', RS: '\r\n' });
+        engine = 'SheetJS';
+      } else {
+        csv = '\uFEFF' + [headers].concat(data).map(function (row) { return row.map(csvEscape).join(','); }).join('\r\n');
+      }
+    } catch (err) {
+      csv = '\uFEFF' + [headers].concat(data).map(function (row) { return row.map(csvEscape).join(','); }).join('\r\n');
+      engine = '原生 CSV';
+    }
+    var now = new Date();
+    var stamp = now.getFullYear() + pad(now.getMonth() + 1) + pad(now.getDate()) + '_' + pad(now.getHours()) + pad(now.getMinutes());
+    setTimeout(function () {
+      downloadBlob(csv, '智慧茶园_历史告警_' + stamp + '.csv');
+      btn.classList.remove('loading');
+      toast('success', 'CSV 已导出', '共 ' + rows.length + ' 条记录，使用 ' + engine + ' 生成。');
+    }, 260);
+  }
+
+  /* ---------- 事件绑定 ---------- */
+  var searchInput = document.getElementById('searchInput');
+  searchInput.addEventListener('input', function () {
+    var clear = document.getElementById('clearSearch');
+    if (clear) clear.classList.toggle('show', !!searchInput.value);
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(function () { applyFilters(); }, 220);
+  });
+  document.getElementById('clearSearch').addEventListener('click', function () {
+    searchInput.value = '';
+    document.getElementById('clearSearch').classList.remove('show');
+    applyFilters();
+    searchInput.focus();
+  });
+  ['dateFrom', 'dateTo'].forEach(function (id) {
+    document.getElementById(id).addEventListener('change', function () {
+      var from = document.getElementById('dateFrom');
+      var to = document.getElementById('dateTo');
+      if (from.value && to.value && from.value > to.value) {
+        var tmp = from.value;
+        from.value = to.value;
+        to.value = tmp;
+        toast('info', '日期已自动调整', '开始日期不能晚于结束日期，已为你交换两个日期。');
+      }
+      applyFilters();
+    });
+  });
+  document.getElementById('resetBtn').addEventListener('click', function () {
+    document.getElementById('dateFrom').value = '';
+    document.getElementById('dateTo').value = '';
+    searchInput.value = '';
+    document.getElementById('clearSearch').classList.remove('show');
+    applyFilters();
+    toast('info', '筛选已重置', '已恢复展示全部告警记录。');
+  });
+  document.getElementById('prevPage').addEventListener('click', function () {
+    if (state.page > 1) { state.page--; renderTable(); }
+  });
+  document.getElementById('nextPage').addEventListener('click', function () {
+    var pageCount = Math.max(1, Math.ceil(state.filtered.length / PAGE_SIZE));
+    if (state.page < pageCount) { state.page++; renderTable(); }
+  });
+  document.getElementById('refreshBtn').addEventListener('click', function () { loadAlerts(true); });
+  document.getElementById('noticeRetry').addEventListener('click', function () { loadAlerts(true); });
+  document.getElementById('exportBtn').addEventListener('click', exportCSV);
+
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden && state.dataLoaded && Date.now() - (state.lastLoadedAt || 0) > 120000) {
+      loadAlerts(false);
+    }
+  });
+
+  /* ---------- 初始化 ---------- */
+  loadAlerts(false);
+  refreshTimer = setInterval(function () {
+    if (!document.hidden) loadAlerts(false);
+  }, 60000);
+  window.addEventListener('beforeunload', function () { if (refreshTimer) clearInterval(refreshTimer); });
+})();
+</script>
+</body>
+</html>

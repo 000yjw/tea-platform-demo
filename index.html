@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="智慧茶园霜冻实时监测平台 · 登录与注册">
+<title>登录 · 智慧茶园霜冻监测平台</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" media="print" onload="this.media='all'">
+<style>
+  :root{
+    --cream:#fbfaf3;
+    --paper:#fffefb;
+    --mint-50:#f2f9f0;
+    --mint-100:#e8f5e9;
+    --mint-200:#d6ebd7;
+    --mint-300:#a5d6a7;
+    --mint-400:#7ebd8e;
+    --leaf:#4b9462;
+    --forest:#225a39;
+    --forest-deep:#153d27;
+    --ink:#173a26;
+    --muted:#60786a;
+    --line:rgba(25,70,44,.12);
+    --sun:#e7c878;
+    --danger:#bf5d50;
+    --danger-soft:#f9ece8;
+    --success:#277a4a;
+    --shadow-lg:0 36px 90px rgba(31,78,49,.16), 0 4px 18px rgba(31,78,49,.05);
+    --shadow-md:0 16px 40px rgba(31,78,49,.10);
+    --radius-xl:34px;
+    --radius-lg:24px;
+    --radius-md:16px;
+    --font-body:"Avenir Next","Nunito","PingFang SC","Hiragino Sans GB","Microsoft YaHei UI","Microsoft YaHei",sans-serif;
+    --font-display:"Avenir Next","Futura","PingFang SC","Hiragino Sans GB","Microsoft YaHei UI","Microsoft YaHei",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    font-family:var(--font-body);
+    color:var(--ink);
+    min-height:100vh;
+    min-height:100dvh;
+    overflow-x:hidden;
+    background:
+      radial-gradient(1200px 700px at 82% -8%, rgba(255,250,226,.9), transparent 60%),
+      linear-gradient(135deg, #f5f4e9 0%, #eef6e8 42%, #e5f2e4 100%);
+    display:flex;
+    flex-direction:column;
+    padding:22px clamp(20px,4.3vw,64px) 18px;
+    position:relative;
+    isolation:isolate;
+  }
+  button,input{font:inherit}
+  button{cursor:pointer}
+  a{color:inherit}
+  ::selection{background:#b8dfbe;color:#12341f}
+  :focus-visible{outline:3px solid rgba(60,130,82,.38);outline-offset:3px}
+  .skip-link{
+    position:fixed;left:20px;top:-80px;z-index:100;
+    background:var(--forest);color:#fff;padding:12px 18px;border-radius:12px;
+    font-size:14px;text-decoration:none;transition:top .2s ease;
+  }
+  .skip-link:focus{top:16px}
+
+  /* ---------- 茶园梯田背景 ---------- */
+  .scene{position:fixed;inset:0;z-index:-3;overflow:hidden;pointer-events:none}
+  .scene svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .scene::after{
+    content:"";position:absolute;inset:0;
+    background:
+      radial-gradient(800px 500px at 14% 40%, rgba(255,255,252,.66), transparent 72%),
+      linear-gradient(180deg, rgba(255,254,247,.22) 0%, transparent 40%, rgba(223,240,220,.24) 100%);
+  }
+  .grain{
+    position:fixed;inset:0;z-index:-2;pointer-events:none;opacity:.33;
+    background-image:radial-gradient(rgba(35,82,52,.15) .7px, transparent .7px);
+    background-size:5px 5px;
+    mask-image:linear-gradient(120deg, #000 0%, transparent 46%, #000 100%);
+    -webkit-mask-image:linear-gradient(120deg, #000 0%, transparent 46%, #000 100%);
+  }
+  .ambient-leaf{position:fixed;z-index:-1;pointer-events:none;opacity:.5;filter:blur(.2px);animation:leafDrift 16s ease-in-out infinite}
+  .ambient-leaf svg{display:block;width:100%;height:auto}
+  .ambient-leaf.one{width:96px;left:6%;top:23%;transform:rotate(-24deg);animation-delay:-2s}
+  .ambient-leaf.two{width:62px;right:5.5%;top:17%;transform:rotate(42deg);opacity:.38;animation-delay:-8s}
+  .ambient-leaf.three{width:76px;right:13%;bottom:9%;transform:rotate(16deg);opacity:.3;animation-delay:-12s}
+  @keyframes leafDrift{
+    0%,100%{translate:0 0;rotate:0deg}
+    35%{translate:12px -16px;rotate:5deg}
+    70%{translate:-7px 9px;rotate:-4deg}
+  }
+
+  /* ---------- 顶部信息 ---------- */
+  .topline{
+    width:100%;max-width:1280px;margin:0 auto;flex-shrink:0;
+    display:flex;align-items:center;justify-content:space-between;gap:20px;
+    position:relative;z-index:3;padding:0 2px;
+  }
+  .brand{display:flex;align-items:center;gap:12px;text-decoration:none}
+  .brand-mark{
+    width:42px;height:42px;border-radius:15px;display:grid;place-items:center;color:#fff;
+    background:linear-gradient(145deg, #4f9d68, #255c3b);
+    box-shadow:0 10px 24px rgba(36,91,59,.24), inset 0 1px 0 rgba(255,255,255,.25);
+  }
+  .brand-mark svg{width:23px;height:23px}
+  .brand-name{display:flex;flex-direction:column;line-height:1.15}
+  .brand-name strong{font-family:var(--font-display);font-size:17px;letter-spacing:.08em;font-weight:700;color:var(--forest-deep)}
+  .brand-name span{font-size:8.5px;letter-spacing:.22em;color:#788b7d;margin-top:4px;font-weight:650}
+  .topline-note{
+    display:inline-flex;align-items:center;gap:9px;font-size:12px;color:#58705f;
+    background:rgba(255,255,251,.6);border:1px solid rgba(255,255,255,.8);
+    padding:9px 14px;border-radius:999px;backdrop-filter:blur(10px);box-shadow:0 8px 22px rgba(43,91,59,.06)
+  }
+  .live-dot{width:7px;height:7px;border-radius:50%;background:#4aa66c;box-shadow:0 0 0 4px rgba(74,166,108,.13);animation:pulseDot 2.4s ease-in-out infinite}
+  @keyframes pulseDot{0%,100%{box-shadow:0 0 0 3px rgba(74,166,108,.12)}50%{box-shadow:0 0 0 7px rgba(74,166,108,.03)}}
+
+  /* ---------- 主体 ---------- */
+  .stage{
+    flex:1;width:100%;max-width:1280px;margin:0 auto;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:18px;position:relative;z-index:2;padding:26px 0 10px;
+  }
+  .auth-shell{
+    width:min(1080px,100%);
+    height:clamp(606px, calc(100dvh - 128px), 710px);
+    min-height:606px;
+    display:grid;grid-template-columns:1.02fr .98fr;
+    background:rgba(255,254,249,.78);
+    border:1px solid rgba(255,255,255,.9);
+    border-radius:var(--radius-xl);
+    box-shadow:var(--shadow-lg);
+    overflow:hidden;
+    backdrop-filter:blur(26px) saturate(115%);
+    -webkit-backdrop-filter:blur(26px) saturate(115%);
+    position:relative;
+    animation:cardIn .8s cubic-bezier(.2,.85,.25,1) both;
+  }
+  @keyframes cardIn{from{opacity:0;transform:translateY(22px) scale(.988)}to{opacity:1;transform:none}}
+  .auth-shell::before{
+    content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:5;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.85), inset 0 0 0 1px rgba(255,255,255,.22);
+  }
+
+  /* 左侧品牌区 */
+  .brand-panel{
+    position:relative;overflow:hidden;padding:clamp(34px,4vw,52px);
+    display:flex;flex-direction:column;
+    background:
+      radial-gradient(420px 300px at 90% 0%, rgba(255,252,232,.7), transparent 65%),
+      linear-gradient(155deg, rgba(231,245,229,.9) 0%, rgba(208,234,210,.86) 58%, rgba(185,220,190,.9) 100%);
+    border-right:1px solid rgba(255,255,255,.58);
+  }
+  .brand-panel::before{
+    content:"";position:absolute;width:370px;height:370px;border-radius:50%;
+    right:-142px;top:-152px;border:1px solid rgba(255,255,255,.58);
+    box-shadow:0 0 0 38px rgba(255,255,255,.08),0 0 0 82px rgba(255,255,255,.055);
+  }
+  .brand-panel::after{
+    content:"TEA";position:absolute;right:-16px;bottom:110px;
+    font-family:var(--font-display);font-size:188px;font-weight:800;letter-spacing:-.09em;
+    color:rgba(255,255,255,.2);line-height:.8;pointer-events:none;
+  }
+  .panel-terraces{position:absolute;left:0;right:0;bottom:-8px;width:100%;height:210px;opacity:.6;pointer-events:none}
+  .panel-content{position:relative;z-index:2;display:flex;flex-direction:column;height:100%}
+  .panel-kicker{
+    display:inline-flex;align-items:center;gap:8px;width:max-content;
+    font-size:10px;font-weight:750;letter-spacing:.2em;color:#3d6a4d;
+    padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.42);
+    border:1px solid rgba(255,255,255,.64);backdrop-filter:blur(8px);
+  }
+  .panel-kicker .dot{width:6px;height:6px;border-radius:50%;background:#5f9f73}
+  .panel-title{
+    margin-top:auto;font-family:var(--font-display);
+    font-size:clamp(34px,3.45vw,47px);line-height:1.24;letter-spacing:-.045em;
+    font-weight:760;color:var(--forest-deep);max-width:430px;
+  }
+  .panel-title em{font-style:normal;color:#2e7c4d;position:relative;display:inline-block;white-space:nowrap;isolation:isolate}
+  .panel-title em::after{
+    content:"";position:absolute;left:0;right:2px;bottom:3px;height:9px;border-radius:99px;
+    background:linear-gradient(90deg, rgba(165,214,167,.84), rgba(243,224,165,.62));z-index:-1;
+  }
+  .panel-desc{margin-top:17px;max-width:405px;font-size:13.5px;line-height:1.9;color:#4e6a58;letter-spacing:.01em}
+  .panel-metrics{
+    margin-top:26px;display:grid;grid-template-columns:repeat(3,1fr);
+    background:rgba(255,255,252,.5);border:1px solid rgba(255,255,255,.72);
+    border-radius:20px;padding:16px 8px;backdrop-filter:blur(10px);
+    box-shadow:0 16px 34px rgba(35,83,52,.07);position:relative;overflow:hidden;
+  }
+  .panel-metrics::after{
+    content:"";position:absolute;left:8%;right:8%;top:0;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.9),transparent);
+  }
+  .metric{padding:0 13px;position:relative}
+  .metric + .metric::before{content:"";position:absolute;left:0;top:8%;bottom:8%;width:1px;background:rgba(37,84,54,.1)}
+  .metric strong{display:block;font-family:var(--font-display);font-size:20px;letter-spacing:-.03em;color:var(--forest-deep);line-height:1.2}
+  .metric strong small{font-size:10px;font-weight:650;letter-spacing:.02em;color:#698073;margin-left:2px}
+  .metric span{display:block;margin-top:6px;font-size:10px;color:#708678;letter-spacing:.04em}
+  .panel-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .panel-tag{
+    display:inline-flex;align-items:center;gap:6px;font-size:10.5px;color:#3f654e;
+    background:rgba(255,255,255,.42);border:1px solid rgba(255,255,255,.58);
+    border-radius:999px;padding:7px 10px;
+  }
+  .panel-tag i{font-size:9px;color:#4a8b60}
+  .panel-quote{
+    margin-top:auto;padding-top:20px;display:flex;gap:10px;align-items:flex-start;
+    color:#52705d;font-size:11.5px;line-height:1.7;max-width:370px;position:relative;z-index:1;
+  }
+  .panel-quote .quote-mark{font-family:Georgia,serif;font-size:34px;line-height:.7;color:rgba(34,90,57,.28);margin-top:4px}
+  .panel-quote b{font-weight:700;color:#315640}
+
+  /* 右侧表单区 */
+  .form-panel{
+    background:rgba(255,254,250,.82);
+    padding:clamp(30px,3.7vw,50px) clamp(29px,3.8vw,52px);
+    display:flex;flex-direction:column;overflow-y:auto;position:relative;
+    scrollbar-width:thin;scrollbar-color:rgba(63,120,82,.25) transparent;
+  }
+  .form-panel::-webkit-scrollbar{width:6px}
+  .form-panel::-webkit-scrollbar-thumb{background:rgba(63,120,82,.22);border-radius:99px}
+  .existing-session{
+    display:none;align-items:center;justify-content:space-between;gap:12px;
+    background:#eef8ed;border:1px solid #d8ebd6;color:#376b48;
+    border-radius:13px;padding:10px 12px;margin-bottom:18px;font-size:11.5px;
+  }
+  .existing-session.show{display:flex}
+  .existing-session button{
+    border:0;background:#fff;color:#27603d;border-radius:8px;padding:6px 9px;font-size:10.5px;font-weight:750;
+    box-shadow:0 3px 10px rgba(37,91,58,.08);
+  }
+  .form-head .mini-label{
+    display:inline-flex;align-items:center;gap:7px;font-size:10px;font-weight:750;
+    letter-spacing:.18em;color:#6d8677;margin-bottom:14px;
+  }
+  .form-head .mini-label .rule{width:22px;height:1px;background:#a5c7ad}
+  .form-head h2{
+    font-family:var(--font-display);font-size:clamp(27px,2.5vw,33px);font-weight:760;
+    letter-spacing:-.045em;color:var(--forest-deep);line-height:1.2;
+  }
+  .form-head p{margin-top:10px;color:#708174;font-size:13px;line-height:1.7}
+  .mode-switch{
+    margin-top:24px;position:relative;display:grid;grid-template-columns:1fr 1fr;
+    padding:4px;border-radius:14px;background:#eef4ea;border:1px solid rgba(47,94,63,.07);
+  }
+  .mode-switch button{
+    position:relative;z-index:2;border:0;background:transparent;color:#7a8d80;
+    height:38px;border-radius:10px;font-size:13px;font-weight:700;letter-spacing:.04em;
+    transition:color .25s ease;
+  }
+  .mode-switch button.active{color:var(--forest-deep)}
+  .switch-thumb{
+    position:absolute;z-index:1;left:4px;top:4px;bottom:4px;width:calc(50% - 4px);
+    border-radius:10px;background:#fff;box-shadow:0 6px 18px rgba(37,83,52,.1);
+    transition:transform .34s cubic-bezier(.22,.86,.28,1);
+  }
+  .mode-switch.register .switch-thumb{transform:translateX(100%)}
+  .auth-alert{
+    display:none;gap:9px;align-items:flex-start;margin-top:16px;padding:11px 12px;
+    border-radius:12px;font-size:11.5px;line-height:1.55;
+    background:var(--danger-soft);color:#8d3e34;border:1px solid rgba(191,93,80,.16);
+  }
+  .auth-alert.show{display:flex;animation:softIn .25s ease both}
+  .auth-alert svg{flex:0 0 auto;width:16px;height:16px;margin-top:1px}
+  @keyframes softIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+  .auth-form{margin-top:18px;display:flex;flex-direction:column;gap:15px}
+  .auth-form[hidden]{display:none}
+  .field label{
+    display:flex;align-items:center;justify-content:space-between;
+    font-size:11.5px;font-weight:700;color:#496454;margin-bottom:7px;letter-spacing:.02em;
+  }
+  .field label .optional{color:#9aab9f;font-size:10px;font-weight:600}
+  .input-wrap{
+    position:relative;display:flex;align-items:center;
+    height:48px;border-radius:13px;background:#fbfcf8;
+    border:1px solid rgba(46,88,58,.13);
+    transition:background .22s ease,border-color .22s ease,box-shadow .22s ease;
+  }
+  .input-wrap:hover{border-color:rgba(46,106,68,.24)}
+  .input-wrap:focus-within{
+    background:#fff;border-color:#72ad82;
+    box-shadow:0 0 0 4px rgba(112,173,130,.12),0 8px 22px rgba(35,87,53,.05);
+  }
+  .input-wrap .lead-icon{width:42px;display:grid;place-items:center;color:#8ca094;flex:0 0 42px}
+  .input-wrap .lead-icon svg{width:17px;height:17px}
+  .input-wrap input{
+    border:0;background:transparent;flex:1;height:100%;min-width:0;color:#1d3c28;
+    font-size:14px;letter-spacing:.01em;outline:none;padding-right:12px;
+  }
+  .input-wrap input::placeholder{color:#a9b6ac;font-size:12.5px}
+  .peek{
+    flex:0 0 38px;width:38px;height:36px;border:0;background:transparent;color:#93a498;
+    display:grid;place-items:center;border-radius:9px;margin-right:4px;
+  }
+  .peek:hover{color:#487a59;background:#f0f6ed}
+  .peek svg{width:17px;height:17px}
+  .peek .eye-off{display:none}
+  .peek.revealed .eye-open{display:none}
+  .peek.revealed .eye-off{display:block}
+  .field.invalid .input-wrap{border-color:rgba(191,93,80,.55);background:#fffafa;box-shadow:0 0 0 4px rgba(191,93,80,.07)}
+  .field-error{display:none;font-size:10.5px;color:#a84a3f;margin-top:6px;padding-left:2px}
+  .field.invalid .field-error{display:block}
+  .field-help{display:none;font-size:10.5px;color:#9a6d3d;margin-top:6px;padding-left:2px}
+  .field.invalid .field-help{display:none}
+  .form-meta{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:-1px}
+  .check{display:inline-flex;align-items:center;gap:8px;font-size:11px;color:#687e70;cursor:pointer;user-select:none}
+  .check input{position:absolute;opacity:0;pointer-events:none}
+  .check .box{
+    width:16px;height:16px;border-radius:5px;border:1px solid #b7c9b9;background:#fff;
+    display:grid;place-items:center;transition:.2s;flex:0 0 16px;
+  }
+  .check .box svg{width:10px;height:10px;color:#fff;opacity:0;transform:scale(.5);transition:.2s}
+  .check input:checked + .box{background:#3b8257;border-color:#3b8257}
+  .check input:checked + .box svg{opacity:1;transform:scale(1)}
+  .check input:focus-visible + .box{outline:3px solid rgba(60,130,82,.3);outline-offset:2px}
+  .text-btn{
+    border:0;background:transparent;color:#4e7f5d;font-size:11px;padding:4px 0;font-weight:650;
+  }
+  .text-btn:hover{color:#235a3a;text-decoration:underline;text-underline-offset:3px}
+  .btn-primary{
+    position:relative;width:100%;height:50px;border:0;border-radius:14px;color:#fff;
+    background:linear-gradient(135deg,#357c50 0%,#235536 100%);
+    box-shadow:0 14px 30px rgba(32,82,50,.22), inset 0 1px 0 rgba(255,255,255,.2);
+    display:flex;align-items:center;justify-content:center;gap:9px;
+    font-size:14px;font-weight:750;letter-spacing:.1em;overflow:hidden;
+    transition:transform .2s ease,box-shadow .2s ease,filter .2s ease;
+    margin-top:3px;
+  }
+  .btn-primary::before{
+    content:"";position:absolute;top:0;bottom:0;left:-45%;width:34%;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);
+    transform:skewX(-20deg);transition:left .55s ease;
+  }
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 18px 34px rgba(32,82,50,.27), inset 0 1px 0 rgba(255,255,255,.2)}
+  .btn-primary:hover::before{left:115%}
+  .btn-primary:active{transform:translateY(0) scale(.997)}
+  .btn-primary:disabled{opacity:.72;cursor:not-allowed;transform:none}
+  .btn-primary .arrow{width:16px;height:16px;transition:transform .22s ease}
+  .btn-primary:hover .arrow{transform:translateX(3px)}
+  .spinner{
+    display:none;width:16px;height:16px;border-radius:50%;
+    border:2px solid rgba(255,255,255,.35);border-top-color:#fff;animation:spin .7s linear infinite;
+  }
+  .btn-primary.loading .spinner{display:block}
+  .btn-primary.loading .arrow{display:none}
+  .btn-primary.loading .label{opacity:.85}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .auth-switch{
+    display:flex;align-items:center;justify-content:center;gap:7px;margin-top:14px;
+    font-size:11.5px;color:#7b8f81;
+  }
+  .auth-switch button{
+    border:0;background:transparent;color:#2c7148;font-weight:750;font-size:11.5px;
+    padding:4px 2px;border-radius:4px;
+  }
+  .auth-switch button:hover{text-decoration:underline;text-underline-offset:3px}
+  .divider{
+    display:flex;align-items:center;gap:12px;color:#a0afa4;font-size:9px;letter-spacing:.13em;
+    margin:19px 0 0;white-space:nowrap;
+  }
+  .divider::before,.divider::after{content:"";height:1px;flex:1;background:rgba(42,79,54,.09)}
+  .form-footer{
+    display:flex;align-items:center;justify-content:space-between;gap:15px;
+    margin-top:auto;padding-top:17px;font-size:11.5px;color:#95a399;
+  }
+  .demo-btn{
+    border:1px solid rgba(49,108,71,.16);background:rgba(241,248,238,.8);color:#50705d;
+    border-radius:999px;padding:7px 11px;font-size:10.5px;font-weight:650;white-space:nowrap;
+    transition:.2s;
+  }
+  .demo-btn:hover{background:#e7f4e5;color:#265b3b;border-color:rgba(49,108,71,.28)}
+  .form-note{margin-top:10px;text-align:center;font-size:9.5px;color:#a6b2a8;letter-spacing:.03em}
+  .stage-foot{
+    max-width:1280px;width:100%;display:flex;align-items:center;justify-content:space-between;
+    gap:16px;font-size:9.5px;color:#8b9d90;letter-spacing:.03em;padding:0 4px;
+    flex-wrap:wrap;
+  }
+  .stage-foot .foot-meta{display:flex;align-items:center;gap:9px}
+  .stage-foot .foot-meta .dot{width:5px;height:5px;border-radius:50%;background:#94b49a}
+
+  /* ---------- Toast ---------- */
+  .toast-stack{position:fixed;right:22px;top:22px;z-index:1000;display:flex;flex-direction:column;gap:10px;width:min(356px,calc(100vw - 36px));pointer-events:none}
+  .toast{
+    display:flex;align-items:flex-start;gap:11px;background:rgba(255,255,252,.96);
+    border:1px solid rgba(255,255,255,.8);border-radius:16px;padding:13px 14px;
+    box-shadow:0 18px 44px rgba(30,70,44,.17);pointer-events:auto;position:relative;overflow:hidden;
+    animation:toastIn .35s cubic-bezier(.2,.9,.25,1) both;backdrop-filter:blur(16px);
+  }
+  .toast.leaving{animation:toastOut .24s ease forwards}
+  .toast-icon{width:27px;height:27px;border-radius:9px;display:grid;place-items:center;flex:0 0 27px;background:#e8f5e8;color:#2d7a4c}
+  .toast.error .toast-icon{background:#faebe8;color:#b65043}
+  .toast.info .toast-icon{background:#edf3ed;color:#5f7969}
+  .toast-icon svg{width:15px;height:15px}
+  .toast-body{flex:1;min-width:0;padding-top:1px}
+  .toast-body strong{display:block;font-size:11.5px;color:#234532;font-weight:750;letter-spacing:.02em}
+  .toast-body p{margin-top:3px;font-size:10.5px;line-height:1.55;color:#718477;word-break:break-word}
+  .toast-close{border:0;background:transparent;color:#a0aea4;width:22px;height:22px;display:grid;place-items:center;border-radius:6px;flex:0 0 22px}
+  .toast-close:hover{background:#f1f5ef;color:#536b5c}
+  .toast-close svg{width:12px;height:12px}
+  .toast-progress{position:absolute;left:0;bottom:0;height:2px;width:100%;background:linear-gradient(90deg,#8dc39a,#4a8e62);transform-origin:left;animation:toastBar 3.6s linear forwards}
+  .toast.error .toast-progress{background:linear-gradient(90deg,#e4a399,#c16656)}
+  @keyframes toastIn{from{opacity:0;transform:translateX(16px) scale(.98)}to{opacity:1;transform:none}}
+  @keyframes toastOut{to{opacity:0;transform:translateX(20px) scale(.98)}}
+  @keyframes toastBar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+
+  @media (max-width:1050px){
+    .auth-shell{grid-template-columns:1fr 1fr}
+    .brand-panel{padding:36px}
+    .form-panel{padding:36px}
+    .panel-metrics{padding:13px 4px}
+    .metric{padding:0 10px}
+  }
+  @media (max-width:860px){
+    body{padding:18px 18px 16px}
+    .topline-note{display:none}
+    .stage{padding:18px 0 10px}
+    .auth-shell{
+      grid-template-columns:1fr;width:min(458px,100%);height:auto;min-height:600px;
+      overflow:visible;background:rgba(255,254,250,.88);
+    }
+    .brand-panel{display:none}
+    .form-panel{padding:32px 28px;overflow:visible}
+    .form-footer{margin-top:20px}
+    .stage-foot{justify-content:center;text-align:center}
+    .ambient-leaf{display:none}
+  }
+  @media (max-height:740px) and (min-width:861px){
+    body{padding-top:14px}
+    .stage{padding:14px 0 8px}
+    .auth-shell{height:calc(100dvh - 104px);min-height:570px}
+    .brand-panel{padding-top:30px;padding-bottom:28px}
+    .panel-title{font-size:36px;margin-top:12px}
+    .panel-desc{margin-top:12px;font-size:12px;line-height:1.75}
+    .panel-metrics{margin-top:18px}
+    .panel-quote{padding-top:12px}
+    .form-panel{padding-top:28px;padding-bottom:24px}
+    .mode-switch{margin-top:18px}
+    .auth-form{margin-top:14px;gap:12px}
+    .divider{margin-top:14px}
+  }
+  @media (max-width:420px){
+    .brand-name strong{font-size:16px}
+    .auth-shell{border-radius:26px}
+    .form-panel{padding:27px 21px}
+    .toast-stack{right:12px;top:12px;width:calc(100vw - 24px)}
+    .form-footer{flex-direction:column;gap:9px;align-items:flex-start}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;scroll-behavior:auto !important}
+  }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#loginUsername">跳到登录表单</a>
+
+<div class="scene" aria-hidden="true">
+  <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#fbf9ef"/>
+        <stop offset=".42" stop-color="#f2f7e9"/>
+        <stop offset="1" stop-color="#dfeedd"/>
+      </linearGradient>
+      <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0" stop-color="#f7e9b7" stop-opacity=".92"/>
+        <stop offset=".46" stop-color="#f4eac6" stop-opacity=".42"/>
+        <stop offset="1" stop-color="#f4eac6" stop-opacity="0"/>
+      </radialGradient>
+      <linearGradient id="ridgeFar" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#cbe3cc" stop-opacity=".72"/>
+        <stop offset="1" stop-color="#e4f0df" stop-opacity=".08"/>
+      </linearGradient>
+      <linearGradient id="ridgeMid" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#aed2b4"/>
+        <stop offset="1" stop-color="#cce5c8"/>
+      </linearGradient>
+      <linearGradient id="ridgeNear" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#93c19d"/>
+        <stop offset="1" stop-color="#b4d7b4"/>
+      </linearGradient>
+      <linearGradient id="field" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#cbe6c8"/>
+        <stop offset="1" stop-color="#a6cfab"/>
+      </linearGradient>
+      <filter id="softBlur" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur stdDeviation="22"/>
+      </filter>
+      <filter id="softerBlur" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur stdDeviation="42"/>
+      </filter>
+    </defs>
+    <rect width="1440" height="900" fill="url(#sky)"/>
+    <circle cx="1168" cy="170" r="250" fill="url(#sunGlow)"/>
+    <circle cx="1168" cy="170" r="57" fill="#f7eac2" opacity=".7"/>
+    <ellipse cx="680" cy="292" rx="430" ry="74" fill="#fffef8" opacity=".52" filter="url(#softerBlur)"/>
+    <ellipse cx="280" cy="418" rx="310" ry="48" fill="#fdfcf5" opacity=".5" filter="url(#softBlur)"/>
+    <path d="M-30 525 C 122 476 257 489 390 463 C 535 434 648 359 806 380 C 963 401 1056 475 1198 455 C 1300 440 1377 464 1470 500 L1470 900 L-30 900 Z" fill="url(#ridgeFar)" filter="url(#softBlur)"/>
+    <path d="M-40 620 C 124 545 280 584 432 559 C 615 530 704 449 891 478 C 1085 508 1191 590 1480 532 L1480 900 L-40 900 Z" fill="url(#ridgeMid)" opacity=".74"/>
+    <g opacity=".36" fill="none" stroke="#f7fbf3" stroke-width="1.3">
+      <path d="M-40 664 C 150 600 302 626 470 600 C 660 570 756 513 933 537 C 1110 560 1249 625 1480 582"/>
+      <path d="M-40 690 C 140 630 308 652 484 627 C 673 600 780 550 954 572 C 1150 596 1282 652 1480 614"/>
+    </g>
+    <path d="M-40 720 C 164 648 337 699 520 670 C 707 640 834 568 1022 611 C 1194 651 1324 722 1490 683 L1490 900 L-40 900 Z" fill="url(#ridgeNear)" opacity=".7"/>
+    <path d="M-40 820 C 163 736 351 799 545 765 C 735 731 863 658 1063 703 C 1224 739 1362 820 1490 786 L1490 900 L-40 900 Z" fill="url(#field)" opacity=".9"/>
+    <g fill="none" stroke="#f7fbf2" stroke-width="1.6" opacity=".55">
+      <path d="M-40 846 C 156 771 357 829 548 797 C 755 762 878 688 1081 737 C 1236 775 1362 846 1490 818"/>
+      <path d="M-40 872 C 166 801 374 855 568 823 C 760 792 894 723 1100 770 C 1250 803 1374 871 1490 846"/>
+      <path d="M-40 898 C 180 831 390 882 590 850 C 790 818 918 752 1128 799 C 1266 830 1382 897 1490 874"/>
+    </g>
+    <g opacity=".28" fill="none" stroke="#4d8c60" stroke-width="1.2">
+      <path d="M-20 780 C 192 709 350 765 534 731 C 711 699 856 647 1038 685 C 1218 722 1341 777 1460 750"/>
+      <path d="M-20 808 C 201 737 369 790 551 758 C 736 726 879 678 1061 714 C 1228 746 1362 804 1460 778"/>
+    </g>
+    <g opacity=".3" fill="#3d7a51">
+      <ellipse cx="124" cy="748" rx="10" ry="22" transform="rotate(-26 124 748)"/>
+      <ellipse cx="145" cy="766" rx="8" ry="18" transform="rotate(38 145 766)"/>
+      <ellipse cx="1322" cy="695" rx="9" ry="20" transform="rotate(22 1322 695)"/>
+      <ellipse cx="1340" cy="711" rx="7" ry="16" transform="rotate(-34 1340 711)"/>
+    </g>
+    <g opacity=".26" fill="#5d9870">
+      <path d="M1265 342c-20-15-44-11-57 3 17 14 39 13 57-3Z"/>
+      <path d="M1278 352c7-22 24-34 41-31-2 19-16 32-41 31Z"/>
+      <path d="M207 349c-15-12-34-9-45 1 13 12 31 12 45-1Z"/>
+      <path d="M218 357c5-17 19-27 32-24-2 15-12 25-32 24Z"/>
+    </g>
+    <ellipse cx="1100" cy="824" rx="330" ry="56" fill="#f7fbf1" opacity=".28" filter="url(#softerBlur)"/>
+  </svg>
+</div>
+<div class="grain" aria-hidden="true"></div>
+<div class="ambient-leaf one" aria-hidden="true"><svg viewBox="0 0 100 100"><path d="M85 12C49 14 24 33 18 66c-2 11 1 18 4 23 9 1 17-1 25-5 26-13 36-40 40-69 .2-1-.1-3-2-3Z" fill="#7fae8a"/><path d="M21 82C37 55 53 38 75 25" fill="none" stroke="#f7fbf4" stroke-width="2.2" stroke-linecap="round" opacity=".7"/></svg></div>
+<div class="ambient-leaf two" aria-hidden="true"><svg viewBox="0 0 100 100"><path d="M85 12C49 14 24 33 18 66c-2 11 1 18 4 23 9 1 17-1 25-5 26-13 36-40 40-69 .2-1-.1-3-2-3Z" fill="#9bbf9d"/><path d="M21 82C37 55 53 38 75 25" fill="none" stroke="#f7fbf4" stroke-width="2.2" stroke-linecap="round" opacity=".7"/></svg></div>
+<div class="ambient-leaf three" aria-hidden="true"><svg viewBox="0 0 100 100"><path d="M85 12C49 14 24 33 18 66c-2 11 1 18 4 23 9 1 17-1 25-5 26-13 36-40 40-69 .2-1-.1-3-2-3Z" fill="#8db697"/><path d="M21 82C37 55 53 38 75 25" fill="none" stroke="#f7fbf4" stroke-width="2.2" stroke-linecap="round" opacity=".7"/></svg></div>
+
+<header class="topline">
+  <a class="brand" href="index.html" aria-label="智慧茶园演示入口">
+    <span class="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 32 32" fill="none">
+        <path d="M26.4 5.3C17.7 6.2 11.8 11 10.3 19.6c-.3 1.8-.2 3.1.1 4.3 1.4.2 2.7.1 4.1-.2 8.6-1.7 13-7.6 13.9-16.6.1-1-.9-1.9-2-1.8Z" fill="currentColor"/>
+        <path d="M7.4 27.2c2.5-6.7 6.6-11 13.3-14.1" stroke="#f7fbf3" stroke-width="1.8" stroke-linecap="round" opacity=".82"/>
+      </svg>
+    </span>
+    <span class="brand-name">
+      <strong>智慧茶园</strong>
+      <span>TEA GARDEN MONITOR</span>
+    </span>
+  </a>
+  <div class="topline-note"><span class="live-dot"></span>霜冻实时监测平台 · 24H 守护</div>
+</header>
+
+<main class="stage">
+  <section class="auth-shell" aria-labelledby="loginTitle">
+    <aside class="brand-panel" aria-label="平台介绍">
+      <svg class="panel-terraces" viewBox="0 0 600 220" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M-20 154C98 108 213 145 337 118c109-24 190-77 292-48v150H-20Z" fill="#b4d8b8" opacity=".52"/>
+        <path d="M-20 184c122-41 241 4 363-25 95-22 173-59 277-28v89H-20Z" fill="#98c79f" opacity=".4"/>
+        <g fill="none" stroke="#f8fcf5" stroke-width="1.2" opacity=".62">
+          <path d="M-20 163C100 119 213 152 340 125c107-23 188-70 280-47"/>
+          <path d="M-20 190c122-36 242 7 367-21 93-21 170-53 273-26"/>
+          <path d="M-20 211c118-23 252 3 379-19 97-17 165-39 261-18"/>
+        </g>
+      </svg>
+      <div class="panel-content">
+        <span class="panel-kicker"><span class="dot"></span>SMART TEA GARDEN · 2026</span>
+        <h1 class="panel-title">让每一次降温，<br><em>都被提前看见。</em></h1>
+        <p class="panel-desc">分钟级气象采集与 AI 霜冻风险研判，把看不见的夜间低温，变成看得见的农事决策。</p>
+
+        <div class="panel-metrics" aria-label="平台能力">
+          <div class="metric"><strong>&lt;60<small>s</small></strong><span>数据刷新间隔</span></div>
+          <div class="metric"><strong>5<small>维</small></strong><span>微气象感知</span></div>
+          <div class="metric"><strong>24<small>/7</small></strong><span>不间断守护</span></div>
+        </div>
+
+        <div class="panel-tags" aria-label="功能标签">
+          <span class="panel-tag"><i class="fa-regular fa-clock" aria-hidden="true"></i>实时气象</span>
+          <span class="panel-tag"><i class="fa-solid fa-seedling" aria-hidden="true"></i>霜冻预警</span>
+          <span class="panel-tag"><i class="fa-solid fa-comment-dots" aria-hidden="true"></i>AI 农事建议</span>
+        </div>
+
+        <div class="panel-quote">
+          <span class="quote-mark" aria-hidden="true">“</span>
+          <span>好茶知冷暖，数据知先机。<br><b>愿这一季的嫩芽，都躲过倒春寒。</b></span>
+        </div>
+      </div>
+    </aside>
+
+    <section class="form-panel" aria-labelledby="loginTitle">
+      <div class="existing-session" id="existingSession">
+        <span>检测到本地已有登录状态</span>
+        <button type="button" id="continueSession">继续进入系统 →</button>
+      </div>
+
+      <div class="form-head">
+        <span class="mini-label"><span class="rule"></span>TEA FARMER WORKSPACE</span>
+        <h2 id="loginTitle">欢迎回来</h2>
+        <p id="formSubtitle">当前为前端演示模式：输入任意非空账号与密码，即可进入工作台。</p>
+      </div>
+
+      <div class="mode-switch" id="modeSwitch" aria-label="登录或注册切换">
+        <button type="button" class="active" id="tabLogin" data-mode="login" role="tab" aria-selected="true">账号登录</button>
+        <button type="button" id="tabRegister" data-mode="register" role="tab" aria-selected="false">注册账号</button>
+        <span class="switch-thumb" aria-hidden="true"></span>
+      </div>
+
+      <div class="auth-alert" id="authAlert" role="alert" aria-live="assertive">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.2M12 16.3v.2" stroke-linecap="round"/></svg>
+        <span id="authAlertText"></span>
+      </div>
+
+      <form class="auth-form" id="loginForm" novalidate>
+        <div class="field" id="fieldLoginUser">
+          <label for="loginUsername">用户名 <span class="optional">USERNAME</span></label>
+          <div class="input-wrap">
+            <span class="lead-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="8.3" r="3.5"/><path d="M4.9 20c.6-4 3.4-6.1 7.1-6.1s6.5 2.1 7.1 6.1" stroke-linecap="round"/></svg></span>
+            <input id="loginUsername" name="username" type="text" placeholder="请输入茶园账号" autocomplete="username" maxlength="40" required>
+          </div>
+          <span class="field-error" id="loginUserError">请输入用户名</span>
+        </div>
+
+        <div class="field" id="fieldLoginPass">
+          <label for="loginPassword">密码 <span class="optional">PASSWORD</span></label>
+          <div class="input-wrap">
+            <span class="lead-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="5" y="10.4" width="14" height="9.6" rx="2.4"/><path d="M8 10.2V7.8a4 4 0 0 1 8 0v2.4M12 14.4v2.1" stroke-linecap="round"/></svg></span>
+            <input id="loginPassword" name="password" type="password" placeholder="请输入登录密码" autocomplete="current-password" maxlength="60" required>
+            <button class="peek" type="button" data-target="loginPassword" aria-label="显示密码">
+              <svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M2.8 12S6.4 5.9 12 5.9 21.2 12 21.2 12 17.6 18.1 12 18.1 2.8 12 2.8 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg class="eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m4 4 16 16M9.9 6.3c.7-.2 1.4-.3 2.1-.3 5.6 0 9.2 6 9.2 6a16 16 0 0 1-2.4 3.2M6.2 7.9A16.5 16.5 0 0 0 2.8 12s3.6 6.1 9.2 6.1c1.3 0 2.6-.3 3.7-.8M10 10a2.8 2.8 0 0 0 4 4" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+          <span class="field-error" id="loginPassError">请输入密码</span>
+        </div>
+
+        <div class="form-meta">
+          <label class="check" for="rememberMe">
+            <input type="checkbox" id="rememberMe">
+            <span class="box"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6.2 4.7 9 10 3.2"/></svg></span>
+            <span>记住账号</span>
+          </label>
+          <button type="button" class="text-btn" id="forgotBtn">忘记密码？</button>
+        </div>
+
+        <button type="submit" class="btn-primary" id="loginBtn">
+          <span class="spinner" aria-hidden="true"></span>
+          <span class="label">登录智慧茶园</span>
+          <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13.5 6.5 19 12l-5.5 5.5"/></svg>
+        </button>
+      </form>
+
+      <form class="auth-form" id="registerForm" novalidate hidden>
+        <div class="field" id="fieldRegUser">
+          <label for="registerUsername">用户名 <span class="optional">USERNAME</span></label>
+          <div class="input-wrap">
+            <span class="lead-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="8.3" r="3.5"/><path d="M4.9 20c.6-4 3.4-6.1 7.1-6.1s6.5 2.1 7.1 6.1" stroke-linecap="round"/></svg></span>
+            <input id="registerUsername" name="username" type="text" placeholder="为茶园创建账号" autocomplete="username" maxlength="40" required>
+          </div>
+          <span class="field-error" id="regUserError">请输入 2–40 位用户名</span>
+        </div>
+
+        <div class="field" id="fieldRegPass">
+          <label for="registerPassword">设置密码 <span class="optional">PASSWORD</span></label>
+          <div class="input-wrap">
+            <span class="lead-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="5" y="10.4" width="14" height="9.6" rx="2.4"/><path d="M8 10.2V7.8a4 4 0 0 1 8 0v2.4M12 14.4v2.1" stroke-linecap="round"/></svg></span>
+            <input id="registerPassword" name="password" type="password" placeholder="请设置登录密码" autocomplete="new-password" maxlength="60" required>
+            <button class="peek" type="button" data-target="registerPassword" aria-label="显示密码">
+              <svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M2.8 12S6.4 5.9 12 5.9 21.2 12 21.2 12 17.6 18.1 12 18.1 2.8 12 2.8 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg class="eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m4 4 16 16M9.9 6.3c.7-.2 1.4-.3 2.1-.3 5.6 0 9.2 6 9.2 6a16 16 0 0 1-2.4 3.2M6.2 7.9A16.5 16.5 0 0 0 2.8 12s3.6 6.1 9.2 6.1c1.3 0 2.6-.3 3.7-.8M10 10a2.8 2.8 0 0 0 4 4" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+          <span class="field-error" id="regPassError">请设置至少 4 位密码</span>
+          <span class="field-help">建议使用 6 位以上字母与数字组合</span>
+        </div>
+
+        <div class="field" id="fieldRegConfirm">
+          <label for="registerConfirm">确认密码 <span class="optional">CONFIRM</span></label>
+          <div class="input-wrap">
+            <span class="lead-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M12 3 5 6v5.2c0 4.4 2.7 7.7 7 9.8 4.3-2.1 7-5.4 7-9.8V6l-7-3Z"/><path d="m8.9 12 2.1 2.1 4.2-4.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <input id="registerConfirm" name="confirm" type="password" placeholder="再次输入密码" autocomplete="new-password" maxlength="60" required>
+          </div>
+          <span class="field-error" id="regConfirmError">两次输入的密码不一致</span>
+        </div>
+
+        <button type="submit" class="btn-primary" id="registerBtn" style="margin-top:5px">
+          <span class="spinner" aria-hidden="true"></span>
+          <span class="label">创建茶园账号</span>
+          <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13.5 6.5 19 12l-5.5 5.5"/></svg>
+        </button>
+      </form>
+
+      <div class="auth-switch">
+        <span id="switchHint">没有账号？</span>
+        <button type="button" id="switchAction">去注册</button>
+      </div>
+
+      <div class="divider"><span>安全 · 稳定 · 轻量</span></div>
+
+      <div class="form-footer">
+        <span>当前为前端演示模式</span>
+        <button type="button" class="demo-btn" id="demoBtn">一键进入演示工作台 →</button>
+      </div>
+      <p class="form-note">GitHub Pages 静态演示 · 任意非空账号密码均可登录</p>
+    </section>
+  </section>
+
+  <div class="stage-foot">
+    <span>智慧茶园霜冻监测平台 · 静态演示版</span>
+    <span class="foot-meta"><span class="dot"></span>纯前端演示 · GitHub Pages Ready</span>
+  </div>
+</main>
+
+<div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="false"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* GitHub Pages 静态演示版：所有登录/注册均在浏览器本地完成，不请求后端。 */
+  var AUTH_KEY = 'tea_user';
+  var REMEMBER_KEY = 'tea_remember_user';
+  var NAME_PREFIX = 'tea_auth:';
+  var currentMode = 'login';
+  var submitting = false;
+
+  var el = {
+    modeSwitch: document.getElementById('modeSwitch'),
+    tabLogin: document.getElementById('tabLogin'),
+    tabRegister: document.getElementById('tabRegister'),
+    loginForm: document.getElementById('loginForm'),
+    registerForm: document.getElementById('registerForm'),
+    loginBtn: document.getElementById('loginBtn'),
+    registerBtn: document.getElementById('registerBtn'),
+    loginTitle: document.getElementById('loginTitle'),
+    formSubtitle: document.getElementById('formSubtitle'),
+    switchHint: document.getElementById('switchHint'),
+    switchAction: document.getElementById('switchAction'),
+    authAlert: document.getElementById('authAlert'),
+    authAlertText: document.getElementById('authAlertText'),
+    existingSession: document.getElementById('existingSession'),
+    continueSession: document.getElementById('continueSession'),
+    rememberMe: document.getElementById('rememberMe'),
+    toastStack: document.getElementById('toastStack')
+  };
+
+  function safeParse(raw) {
+    if (!raw) return null;
+    try { return JSON.parse(raw); } catch (err) { return null; }
+  }
+
+  function readAuth() {
+    var user = null;
+    try {
+      user = safeParse(localStorage.getItem(AUTH_KEY));
+      if (user && user.username) return user;
+    } catch (err) {}
+    try {
+      var name = window.name || '';
+      if (name.indexOf(NAME_PREFIX) === 0) {
+        user = JSON.parse(decodeURIComponent(name.slice(NAME_PREFIX.length)));
+        if (user && user.username) return user;
+      }
+    } catch (err) {}
+    return null;
+  }
+
+  function saveAuth(user) {
+    var raw = JSON.stringify(user);
+    try { localStorage.setItem(AUTH_KEY, raw); localStorage.setItem('tea_login_at', String(Date.now())); } catch (err) {}
+    try { window.name = NAME_PREFIX + encodeURIComponent(raw); } catch (err) {}
+  }
+
+  function getRememberedUser() {
+    try { return localStorage.getItem(REMEMBER_KEY) || ''; } catch (err) { return ''; }
+  }
+
+  function setRememberedUser(name) {
+    try {
+      if (name) localStorage.setItem(REMEMBER_KEY, name);
+      else localStorage.removeItem(REMEMBER_KEY);
+    } catch (err) {}
+  }
+
+  /* ---------- Toast ---------- */
+  var toastIcons = {
+    success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>',
+    error: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 8v4.5M12 16.4v.2"/><circle cx="12" cy="12" r="9"/></svg>',
+    info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.2"/></svg>'
+  };
+  function toast(type, title, message) {
+    var node = document.createElement('div');
+    node.className = 'toast ' + (type === 'success' ? 'success' : type === 'error' ? 'error' : 'info');
+    node.setAttribute('role', type === 'error' ? 'alert' : 'status');
+    node.innerHTML =
+      '<span class="toast-icon">' + (toastIcons[type] || toastIcons.info) + '</span>' +
+      '<div class="toast-body"><strong></strong><p></p></div>' +
+      '<button type="button" class="toast-close" aria-label="关闭提示"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button>' +
+      '<span class="toast-progress"></span>';
+    node.querySelector('strong').textContent = title || '';
+    node.querySelector('p').textContent = message || '';
+    el.toastStack.appendChild(node);
+    var remove = function () {
+      if (node.classList.contains('leaving')) return;
+      node.classList.add('leaving');
+      setTimeout(function () { node.remove(); }, 260);
+    };
+    node.querySelector('.toast-close').addEventListener('click', remove);
+    var timer = setTimeout(remove, 3800);
+    node.addEventListener('mouseenter', function () { clearTimeout(timer); var bar = node.querySelector('.toast-progress'); if (bar) bar.style.animationPlayState = 'paused'; });
+    node.addEventListener('mouseleave', function () { timer = setTimeout(remove, 2200); var bar = node.querySelector('.toast-progress'); if (bar) bar.style.animationPlayState = 'running'; });
+  }
+
+  /* ---------- Alert helpers ---------- */
+  function clearAlert() {
+    el.authAlert.classList.remove('show');
+    el.authAlertText.textContent = '';
+  }
+  function showAlert(message) {
+    el.authAlertText.textContent = message;
+    el.authAlert.classList.add('show');
+  }
+
+  function markField(fieldId, errorId, invalid, message) {
+    var field = document.getElementById(fieldId);
+    var error = errorId ? document.getElementById(errorId) : null;
+    if (!field) return;
+    field.classList.toggle('invalid', !!invalid);
+    if (error && message) error.textContent = message;
+  }
+
+  function clearFieldErrors(form) {
+    Array.prototype.forEach.call(form.querySelectorAll('.field.invalid'), function (node) { node.classList.remove('invalid'); });
+  }
+
+  function setLoading(button, isLoading) {
+    if (!button) return;
+    button.disabled = !!isLoading;
+    button.classList.toggle('loading', !!isLoading);
+    button.setAttribute('aria-busy', isLoading ? 'true' : 'false');
+    var label = button.querySelector('.label');
+    if (label) {
+      if (isLoading) {
+        button.dataset.originalLabel = label.textContent;
+        label.textContent = '正在进入演示工作台…';
+      } else if (button.dataset.originalLabel) {
+        label.textContent = button.dataset.originalLabel;
+      }
+    }
+  }
+
+  /* ---------- 表单模式 ---------- */
+  function setMode(mode) {
+    if (submitting || (mode !== 'login' && mode !== 'register')) return;
+    currentMode = mode;
+    clearAlert();
+    var isLogin = mode === 'login';
+    el.modeSwitch.classList.toggle('register', !isLogin);
+    el.tabLogin.classList.toggle('active', isLogin);
+    el.tabRegister.classList.toggle('active', !isLogin);
+    el.tabLogin.setAttribute('aria-selected', isLogin ? 'true' : 'false');
+    el.tabRegister.setAttribute('aria-selected', isLogin ? 'false' : 'true');
+    el.loginForm.hidden = !isLogin;
+    el.registerForm.hidden = isLogin;
+    el.loginTitle.textContent = isLogin ? '欢迎回来' : '创建茶园账号';
+    el.formSubtitle.textContent = isLogin
+      ? '当前为前端演示模式：输入任意非空账号与密码，即可进入工作台。'
+      : '演示版会在本地模拟创建账号流程，无需连接服务器。';
+    el.switchHint.textContent = isLogin ? '没有账号？' : '已有茶园账号？';
+    el.switchAction.textContent = isLogin ? '去注册' : '返回登录';
+    var focusTarget = isLogin ? document.getElementById('loginUsername') : document.getElementById('registerUsername');
+    setTimeout(function () { try { focusTarget.focus({ preventScroll: true }); } catch (err) {} }, 120);
+  }
+
+  el.tabLogin.addEventListener('click', function () { setMode('login'); });
+  el.tabRegister.addEventListener('click', function () { setMode('register'); });
+  el.switchAction.addEventListener('click', function () { setMode(currentMode === 'login' ? 'register' : 'login'); });
+
+  /* ---------- 密码显隐 ---------- */
+  Array.prototype.forEach.call(document.querySelectorAll('.peek'), function (btn) {
+    btn.addEventListener('click', function () {
+      var input = document.getElementById(btn.getAttribute('data-target'));
+      if (!input) return;
+      var isPassword = input.type === 'password';
+      input.type = isPassword ? 'text' : 'password';
+      btn.classList.toggle('revealed', isPassword);
+      btn.setAttribute('aria-label', isPassword ? '隐藏密码' : '显示密码');
+      input.focus();
+    });
+  });
+
+  /* ---------- 登录（静态演示：本地校验 + 本地会话） ---------- */
+  el.loginForm.addEventListener('submit', function (event) {
+    event.preventDefault();
+    if (submitting) return;
+    clearAlert();
+    clearFieldErrors(el.loginForm);
+    var username = document.getElementById('loginUsername').value.trim();
+    var password = document.getElementById('loginPassword').value;
+    var valid = true;
+    if (!username) { markField('fieldLoginUser', 'loginUserError', true); valid = false; }
+    if (!password) { markField('fieldLoginPass', 'loginPassError', true); valid = false; }
+    if (!valid) return;
+    submitting = true;
+    var demoUser = {
+      id: 0,
+      username: username,
+      name: username,
+      role: 'demo',
+      demo: true,
+      loginAt: new Date().toISOString()
+    };
+    saveAuth(demoUser);
+    setRememberedUser(el.rememberMe.checked ? username : '');
+    clearAlert();
+    setLoading(el.loginBtn, true);
+    toast('success', '进入前端演示工作台', '当前为前端演示模式，茶园数据将在工作台中本地模拟呈现。');
+    window.location.href = 'system2.html';
+  });
+
+  /* ---------- 注册 ---------- */
+  el.registerForm.addEventListener('submit', function (event) {
+    event.preventDefault();
+    if (submitting) return;
+    clearAlert();
+    clearFieldErrors(el.registerForm);
+    var username = document.getElementById('registerUsername').value.trim();
+    var password = document.getElementById('registerPassword').value;
+    var confirm = document.getElementById('registerConfirm').value;
+    var valid = true;
+    if (username.length < 2) { markField('fieldRegUser', 'regUserError', true, '请输入 2–40 位用户名'); valid = false; }
+    if (password.length < 4) { markField('fieldRegPass', 'regPassError', true, '请设置至少 4 位密码'); valid = false; }
+    if (confirm !== password) { markField('fieldRegConfirm', 'regConfirmError', true, '两次输入的密码不一致'); valid = false; }
+    if (!valid) return;
+    submitting = true;
+    try { localStorage.setItem('tea_demo_last_account', username); } catch (err) {}
+    toast('success', '注册成功', '演示版账号已在本地准备就绪，可直接登录体验。');
+    document.getElementById('loginUsername').value = username;
+    document.getElementById('loginPassword').value = password;
+    document.getElementById('registerPassword').value = '';
+    document.getElementById('registerConfirm').value = '';
+    submitting = false;
+    setMode('login');
+    showAlert('注册成功！当前为前端演示模式，已自动填入账号与密码，可直接登录。');
+    el.authAlert.style.background = '#edf8ed';
+    el.authAlert.style.color = '#2c6d45';
+    el.authAlert.style.borderColor = 'rgba(57,125,80,.16)';
+    document.getElementById('loginPassword').focus();
+  });
+
+  /* 切换模式时恢复错误提示的默认红色 */
+  var defaultAlertStyle = null;
+  function resetAlertStyle() {
+    el.authAlert.style.background = '';
+    el.authAlert.style.color = '';
+    el.authAlert.style.borderColor = '';
+  }
+  var _setMode = setMode;
+  setMode = function (mode) {
+    resetAlertStyle();
+    _setMode(mode);
+  };
+  el.tabLogin.addEventListener('click', function () { resetAlertStyle(); });
+  el.tabRegister.addEventListener('click', function () { resetAlertStyle(); });
+  el.switchAction.addEventListener('click', function () { resetAlertStyle(); });
+
+  /* 输入时清除错误 */
+  [['loginUsername', 'fieldLoginUser'], ['loginPassword', 'fieldLoginPass'], ['registerUsername', 'fieldRegUser'], ['registerPassword', 'fieldRegPass'], ['registerConfirm', 'fieldRegConfirm']].forEach(function (pair) {
+    var input = document.getElementById(pair[0]);
+    var field = document.getElementById(pair[1]);
+    if (!input || !field) return;
+    input.addEventListener('input', function () {
+      field.classList.remove('invalid');
+      if (el.authAlert.classList.contains('show')) { clearAlert(); resetAlertStyle(); }
+    });
+  });
+
+  document.getElementById('forgotBtn').addEventListener('click', function () {
+    toast('info', '演示版提示', '当前为前端演示模式，任意非空账号与密码都可以直接登录。');
+  });
+
+  /* ---------- 记住账号 / 已有会话 ---------- */
+  var remembered = getRememberedUser();
+  if (remembered) {
+    document.getElementById('loginUsername').value = remembered;
+    el.rememberMe.checked = true;
+  }
+  var existing = readAuth();
+  if (existing && existing.username) {
+    el.existingSession.classList.add('show');
+    el.continueSession.addEventListener('click', function () {
+      window.location.href = 'system2.html';
+    });
+  }
+
+  /* ---------- 一键演示入口 ---------- */
+  document.getElementById('demoBtn').addEventListener('click', function () {
+    if (submitting) return;
+    var demoUser = { id: 0, username: '茶园演示', name: '茶园演示', role: 'demo', demo: true };
+    saveAuth(demoUser);
+    setRememberedUser('');
+    toast('success', '已进入前端演示模式', '当前展示本地模拟数据，不影响页面交互与图表体验。');
+    window.location.href = 'system2.html';
+  });
+
+  /* ---------- 初始化 ---------- */
+  if (remembered) { document.getElementById('loginPassword').focus(); }
+  else { document.getElementById('loginUsername').focus(); }
+})();
+</script>
+</body>
+</html>

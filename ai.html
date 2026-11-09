@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="智慧茶园 AI 农事顾问 · 霜冻风险与防冻知识问答">
+<title>AI 助手 · 智慧茶园</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" media="print" onload="this.media='all'">
+<style>
+  :root{
+    --cream:#fafaf1;
+    --paper:#fffef9;
+    --mint-50:#f3faf0;
+    --mint-100:#e8f5e9;
+    --mint-200:#d8ecd8;
+    --mint-300:#a5d6a7;
+    --leaf:#4a9462;
+    --forest:#1f5839;
+    --forest-deep:#123a26;
+    --ink:#163a26;
+    --muted:#60796a;
+    --line:rgba(29,74,46,.11);
+    --danger:#ba5e50;
+    --amber:#b07f38;
+    --shadow:0 25px 65px rgba(30,73,46,.11);
+    --font-body:"Avenir Next","Nunito","PingFang SC","Hiragino Sans GB","Microsoft YaHei UI","Microsoft YaHei",sans-serif;
+    --font-display:"Avenir Next","Futura","PingFang SC","Hiragino Sans GB","Microsoft YaHei UI","Microsoft YaHei",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:var(--font-body);color:var(--ink);min-height:100vh;min-height:100dvh;
+    background:
+      radial-gradient(880px 640px at 96% -7%,rgba(255,248,220,.7),transparent 64%),
+      radial-gradient(860px 680px at 3% 10%,rgba(225,243,221,.98),transparent 68%),
+      linear-gradient(140deg,#f8f8ee 0%,#f0f8ec 52%,#e8f4e5 100%);
+    overflow:hidden;opacity:0;transition:opacity .4s ease;position:relative;isolation:isolate;
+    -webkit-font-smoothing:antialiased;
+  }
+  body.is-ready{opacity:1}
+  body::before{
+    content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.34;
+    background-image:radial-gradient(rgba(45,94,61,.16) .65px,transparent .65px);
+    background-size:5px 5px;
+    mask-image:linear-gradient(112deg,#000 0%,transparent 43%,#000 100%);
+    -webkit-mask-image:linear-gradient(112deg,#000 0%,transparent 43%,#000 100%);
+  }
+  button,textarea,input{font:inherit}
+  button{cursor:pointer}
+  ::selection{background:#bde1c0;color:#12341f}
+  :focus-visible{outline:3px solid rgba(63,130,84,.34);outline-offset:3px}
+
+  .topography{position:fixed;right:-6%;top:-22%;width:min(920px,72vw);height:min(920px,72vw);z-index:-2;pointer-events:none;opacity:.45}
+  .topography svg{width:100%;height:100%;display:block}
+  .back-leaf{position:fixed;pointer-events:none;z-index:-1;opacity:.16;filter:drop-shadow(0 10px 18px rgba(39,86,54,.06))}
+  .back-leaf.a{width:115px;left:-22px;bottom:-18px;transform:rotate(-32deg)}
+  .back-leaf.b{width:74px;right:5%;bottom:7%;transform:rotate(26deg);opacity:.12}
+  .ai-page{
+    height:100dvh;min-height:660px;width:min(1520px,100%);margin:0 auto;
+    padding:19px clamp(19px,2.5vw,34px) 22px;display:flex;flex-direction:column;gap:14px;position:relative;z-index:1;
+  }
+
+  /* ---------- 顶部 ---------- */
+  .ai-head{
+    display:flex;align-items:center;justify-content:space-between;gap:26px;
+    padding:0 5px;flex-shrink:0;animation:rise .5s ease both;
+  }
+  .head-left{display:flex;align-items:center;gap:17px;min-width:0}
+  .brand-mark{
+    width:42px;height:42px;border-radius:14px;display:grid;place-items:center;color:#fff;flex:0 0 42px;
+    background:linear-gradient(145deg,#519d6b,#255c3b);
+    box-shadow:0 11px 24px rgba(32,84,52,.22),inset 0 1px 0 rgba(255,255,255,.24);
+  }
+  .brand-mark svg{width:23px;height:23px}
+  .brand-text{display:flex;flex-direction:column;gap:4px;line-height:1.1;flex-shrink:0}
+  .brand-text strong{font-family:var(--font-display);font-size:15px;font-weight:760;letter-spacing:.06em;color:var(--forest-deep)}
+  .brand-text span{font-size:7.5px;font-weight:700;letter-spacing:.19em;color:#879b8c}
+  .head-divider{width:1px;height:38px;background:rgba(35,83,52,.11);flex-shrink:0}
+  .head-title{min-width:0}
+  .head-title .eyebrow{display:flex;align-items:center;gap:7px;font-size:9.5px;font-weight:750;letter-spacing:.17em;color:#708a78;text-transform:uppercase}
+  .head-title .eyebrow .spark{width:13px;height:13px;color:#659673}
+  .head-title h1{
+    margin-top:5px;font-family:var(--font-display);font-size:clamp(19px,2vw,25px);font-weight:750;
+    letter-spacing:-.03em;color:var(--forest-deep);line-height:1.25;white-space:nowrap;
+  }
+  .head-title h1 em{font-style:normal;color:#3b7f56}
+  .head-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+  .service-pill{
+    display:inline-flex;align-items:center;gap:7px;height:31px;padding:0 11px;border-radius:999px;
+    background:rgba(255,255,252,.68);border:1px solid rgba(255,255,255,.88);font-size:9.5px;color:#5f7969;
+    box-shadow:0 8px 18px rgba(33,77,48,.05);white-space:nowrap;
+  }
+  .service-pill .dot{width:5px;height:5px;border-radius:50%;background:#8fa597}
+  .service-pill.live{color:#34704b;background:rgba(246,253,244,.9)}
+  .service-pill.live .dot{background:#50a46d;box-shadow:0 0 0 3px rgba(80,164,109,.1);animation:pulse 2.5s infinite}
+  .service-pill.offline{color:#98702c;background:#fbf5e6;border-color:#f0e4c9}
+  .service-pill.offline .dot{background:#c99643}
+  @keyframes pulse{50%{opacity:.5}}
+  .head-clock{display:flex;flex-direction:column;align-items:flex-end;gap:2px;padding-left:11px;border-left:1px solid rgba(36,81,51,.1)}
+  .head-clock span{font-size:9px;color:#93a497;letter-spacing:.03em}
+  .head-clock strong{font-family:var(--font-display);font-size:13.5px;font-weight:700;color:#446a51;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+
+  /* ---------- 主布局 ---------- */
+  .ai-grid{
+    flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.62fr) minmax(322px,.76fr);
+    gap:14px;animation:rise .6s cubic-bezier(.2,.8,.3,1) .06s both;
+  }
+  .panel{
+    border-radius:28px;border:1px solid rgba(255,255,255,.86);
+    box-shadow:var(--shadow);overflow:hidden;background:rgba(255,255,251,.8);
+    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  }
+
+  /* ---------- 聊天 ---------- */
+  .chat-card{display:flex;flex-direction:column;min-height:0;background:rgba(255,255,252,.83)}
+  .chat-head{
+    flex:0 0 auto;height:66px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;
+    border-bottom:1px solid rgba(35,82,52,.08);background:rgba(255,255,252,.47);
+  }
+  .ai-identity{display:flex;align-items:center;gap:11px;min-width:0}
+  .ai-avatar{
+    width:39px;height:39px;border-radius:13px;display:grid;place-items:center;position:relative;flex-shrink:0;
+    background:linear-gradient(145deg,#dff0dc,#c1dfc2);color:#2e6a45;box-shadow:inset 0 0 0 1px rgba(255,255,255,.7);
+  }
+  .ai-avatar svg{width:21px;height:21px}
+  .ai-avatar::after{
+    content:"";position:absolute;right:-1px;bottom:-1px;width:9px;height:9px;border-radius:50%;
+    background:#54a872;border:2px solid #fffdf8;
+  }
+  .identity-copy{min-width:0}
+  .identity-copy h2{font-family:var(--font-display);font-size:14px;font-weight:740;letter-spacing:-.015em;color:#254d35;display:flex;align-items:center;gap:7px}
+  .identity-copy h2 .tiny-tag{font-family:var(--font-body);font-size:6.5px;font-weight:750;letter-spacing:.1em;color:#5b8b6c;background:#e7f4e4;border-radius:4px;padding:3px 5px;transform:translateY(-1px)}
+  .identity-copy p{margin-top:3px;font-size:9px;color:#93a498;display:flex;align-items:center;gap:5px}
+  .identity-copy p .s-dot{width:4px;height:4px;border-radius:50%;background:#56a773;box-shadow:0 0 0 2px rgba(86,167,115,.1)}
+  .chat-tools{display:flex;align-items:center;gap:7px;flex-shrink:0}
+  .context-chip{
+    display:inline-flex;align-items:center;gap:5px;font-size:7.5px;color:#758c7d;
+    background:rgba(246,251,242,.85);border:1px solid rgba(255,255,255,.8);border-radius:7px;padding:6px 8px;white-space:nowrap;
+  }
+  .context-chip svg{width:11px;height:11px;color:#86a28f}
+  .tool-btn{
+    width:28px;height:28px;border-radius:8px;border:1px solid rgba(43,86,57,.09);
+    background:rgba(255,255,252,.7);color:#829889;display:grid;place-items:center;transition:.2s;
+  }
+  .tool-btn svg{width:13px;height:13px}
+  .tool-btn:hover{background:#fff;color:#365f46;transform:translateY(-1px)}
+  .tool-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+  .chat-scroll{
+    flex:1;min-height:0;overflow-y:auto;padding:19px 22px 9px;scroll-behavior:smooth;
+    scrollbar-width:thin;scrollbar-color:rgba(69,126,84,.22) transparent;
+    background:
+      radial-gradient(460px 300px at 100% 0%,rgba(237,247,232,.8),transparent 72%),
+      linear-gradient(180deg,rgba(255,255,252,.38),rgba(249,252,245,.26));
+  }
+  .chat-scroll::-webkit-scrollbar{width:5px}
+  .chat-scroll::-webkit-scrollbar-thumb{background:rgba(69,126,84,.2);border-radius:99px}
+
+  .date-divider{display:flex;align-items:center;gap:10px;margin:1px 0 17px;color:#a3b1a7;font-size:7.5px;letter-spacing:.08em}
+  .date-divider::before,.date-divider::after{content:"";height:1px;flex:1;background:linear-gradient(90deg,transparent,rgba(38,81,52,.09),transparent)}
+  .msg-row{display:flex;align-items:flex-start;gap:9px;margin-bottom:16px;animation:msgIn .35s cubic-bezier(.2,.8,.3,1) both}
+  .msg-row.user{flex-direction:row-reverse}
+  @keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .msg-avatar{
+    width:29px;height:29px;border-radius:9px;display:grid;place-items:center;flex:0 0 29px;margin-top:15px;
+    font-family:var(--font-display);font-size:10px;font-weight:750;
+  }
+  .msg-avatar.ai{background:linear-gradient(145deg,#e1f1de,#c5e1c6);color:#2d6d47;border:1px solid rgba(255,255,255,.7)}
+  .msg-avatar.ai svg{width:16px;height:16px}
+  .msg-avatar.user{background:linear-gradient(145deg,#357b51,#225b3b);color:#fff;font-size:11px;box-shadow:0 5px 12px rgba(30,78,47,.16)}
+  .msg-content{max-width:min(78%,650px);min-width:0}
+  .msg-row.user .msg-content{display:flex;flex-direction:column;align-items:flex-end}
+  .msg-meta{display:flex;align-items:center;gap:6px;margin:0 2px 5px;font-size:8.5px;color:#9aab9e}
+  .msg-meta strong{font-size:9px;color:#6e8777;font-weight:700}
+  .msg-row.user .msg-meta{flex-direction:row-reverse}
+  .bubble{
+    position:relative;border-radius:17px;padding:13px 16px;font-size:12.5px;line-height:1.85;letter-spacing:.006em;
+    word-break:break-word;
+  }
+  .bubble-text{white-space:pre-wrap}
+  .bubble-text .b-heading{display:block;margin:3px 0 2px;font-size:12.5px;color:#2c5f40;font-weight:750}
+  .bubble-text .b-li{display:block;position:relative;padding-left:11px}
+  .bubble-text .b-li::before{content:"";position:absolute;left:1px;top:.76em;width:4px;height:4px;border-radius:50%;background:#75a484}
+  .bubble-text .b-li + br{display:none}
+  .ai-bubble{
+    background:#fffefb;border:1px solid rgba(255,255,255,.9);color:#3f5d4a;
+    border-top-left-radius:5px;box-shadow:0 9px 24px rgba(35,78,50,.06);
+  }
+  .user-bubble{
+    background:linear-gradient(145deg,#dff1df,#cfe8d2);border:1px solid rgba(255,255,255,.75);color:#2b5038;
+    border-top-right-radius:5px;box-shadow:0 8px 20px rgba(39,91,55,.06);
+  }
+  .msg-actions{display:flex;align-items:center;gap:8px;margin:5px 2px 0;min-height:15px}
+  .msg-row.user .msg-actions{justify-content:flex-end}
+  .source-tag{font-size:7.5px;font-weight:700;color:#8b9e8f;background:rgba(245,250,241,.9);border:1px solid rgba(255,255,255,.8);border-radius:4px;padding:2px 5px;letter-spacing:.03em}
+  .source-tag.offline{color:#9b7334;background:#fbf4e5;border-color:#f2e7d1}
+  .source-tag.demo{color:#34714b;background:rgba(246,253,244,.92);border-color:rgba(162,201,167,.36)}
+  .copy-btn{
+    display:inline-flex;align-items:center;gap:4px;border:0;background:transparent;color:#a4b2a7;font-size:8px;
+    padding:2px 3px;border-radius:4px;opacity:0;transition:.2s;
+  }
+  .ai-row:hover .copy-btn,.copy-btn:focus-visible{opacity:1}
+  .copy-btn:hover{color:#4f7d5f;background:#f2f8ef}
+  .copy-btn svg{width:10px;height:10px}
+  .bubble-text.typing::after{
+    content:"";display:inline-block;width:2px;height:1em;background:#6fa07e;margin-left:2px;vertical-align:-2px;
+    animation:caret .8s step-end infinite;
+  }
+  @keyframes caret{50%{opacity:0}}
+  .typing-bubble{display:flex;align-items:center;gap:9px;min-height:39px;padding:10px 14px!important}
+  .typing-dots{display:inline-flex;gap:4px;align-items:center;height:13px}
+  .typing-dots span{width:5px;height:5px;border-radius:50%;background:#78a688;animation:typingBounce 1.15s infinite ease-in-out}
+  .typing-dots span:nth-child(2){animation-delay:.14s}
+  .typing-dots span:nth-child(3){animation-delay:.28s}
+  .typing-copy{font-size:9px;color:#91a396;white-space:nowrap}
+  @keyframes typingBounce{0%,60%,100%{transform:translateY(0);opacity:.46}30%{transform:translateY(-4px);opacity:1}}
+
+  .chat-composer{
+    flex:0 0 auto;padding:10px 19px 13px;border-top:1px solid rgba(35,82,52,.08);
+    background:rgba(255,255,252,.6);position:relative;
+  }
+  .composer-inner{
+    display:flex;align-items:flex-end;gap:9px;background:#fffefb;border:1px solid rgba(41,85,55,.12);
+    border-radius:16px;padding:8px 8px 8px 14px;transition:.2s;box-shadow:0 7px 20px rgba(35,77,49,.045);
+  }
+  .composer-inner:focus-within{border-color:#85b492;box-shadow:0 0 0 4px rgba(96,156,113,.09),0 9px 23px rgba(35,77,49,.055)}
+  .composer-inner textarea{
+    flex:1;border:0;outline:0;resize:none;background:transparent;color:#294a37;font-size:12px;line-height:1.7;
+    min-height:25px;max-height:90px;padding:3px 0;overflow-y:auto;scrollbar-width:thin;
+  }
+  .composer-inner textarea::placeholder{color:#a8b6ab}
+  .send-btn{
+    flex:0 0 auto;height:35px;min-width:73px;padding:0 12px;border:0;border-radius:10px;
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    background:linear-gradient(135deg,#3f865a,#245b3c);color:#fff;font-size:10px;font-weight:750;
+    box-shadow:0 8px 17px rgba(31,78,47,.16);transition:.2s;
+  }
+  .send-btn svg{width:14px;height:14px}
+  .send-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 11px 21px rgba(31,78,47,.22)}
+  .send-btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+  .composer-meta{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px 4px 0;min-height:17px}
+  .composer-hint{font-size:8.5px;color:#9fafa3;display:flex;align-items:center;gap:5px}
+  .composer-hint kbd{font-family:var(--font-body);font-size:6.5px;color:#84988a;background:#edf5e9;border:1px solid rgba(255,255,255,.7);border-bottom-color:#dce8d8;border-radius:3px;padding:2px 4px}
+  .composer-count{font-size:8px;color:#a7b5aa;font-variant-numeric:tabular-nums}
+  .composer-count.near{color:#b18846}
+
+  /* ---------- 右侧 ---------- */
+  .side-col{display:flex;flex-direction:column;gap:14px;min-height:0}
+  .mascot-card{
+    position:relative;flex:0 0 auto;min-height:310px;border-radius:28px;overflow:hidden;color:#ecf8ed;
+    background:
+      radial-gradient(260px 190px at 84% 0%,rgba(245,230,171,.16),transparent 65%),
+      radial-gradient(260px 290px at 13% 100%,rgba(150,206,157,.17),transparent 68%),
+      linear-gradient(152deg,#2f6c4a 0%,#1d5134 47%,#103521 100%);
+    border:1px solid rgba(255,255,255,.15);
+    box-shadow:0 25px 55px rgba(19,56,34,.23),inset 0 1px 0 rgba(255,255,255,.1);
+    padding:17px 19px 15px;display:flex;flex-direction:column;
+  }
+  .mascot-card::before{
+    content:"";position:absolute;right:-84px;top:-98px;width:265px;height:265px;border-radius:50%;
+    border:1px solid rgba(255,255,255,.08);box-shadow:0 0 0 34px rgba(255,255,255,.025),0 0 0 73px rgba(255,255,255,.018);
+    pointer-events:none;
+  }
+  .mascot-top{display:flex;align-items:center;justify-content:space-between;gap:12px;position:relative;z-index:2}
+  .mascot-kicker{display:inline-flex;align-items:center;gap:6px;font-size:8.5px;font-weight:750;letter-spacing:.15em;color:rgba(220,242,222,.6)}
+  .mascot-kicker .dot{width:5px;height:5px;border-radius:50%;background:#86c499;box-shadow:0 0 0 3px rgba(134,196,153,.09)}
+  .mascot-state{
+    font-size:8px;font-weight:700;color:#dcefde;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.12);
+    border-radius:999px;padding:5px 8px;transition:.3s;white-space:nowrap;
+  }
+  .mascot-state.thinking{background:rgba(242,222,158,.14);color:#f4e7b5;border-color:rgba(242,222,158,.18)}
+  .mascot-intro{position:relative;z-index:2;margin-top:8px;max-width:280px}
+  .mascot-intro h2{font-family:var(--font-display);font-size:17px;font-weight:730;letter-spacing:-.03em;line-height:1.3;color:#f0faef}
+  .mascot-intro h2 em{font-style:normal;color:#d8eab9}
+  .mascot-intro p{margin-top:5px;font-size:9.5px;line-height:1.6;color:rgba(211,237,216,.6);max-width:250px}
+
+  .mascot-stage{
+    position:relative;z-index:2;height:133px;display:flex;align-items:flex-end;justify-content:center;margin-top:2px;
+  }
+  .mascot-halo{
+    position:absolute;left:50%;bottom:13px;transform:translateX(-50%);width:194px;height:74px;border-radius:50%;
+    background:radial-gradient(ellipse,rgba(184,220,170,.17),transparent 68%);pointer-events:none;
+  }
+  .thought-bubble{
+    position:absolute;right:4%;top:0;display:flex;align-items:center;gap:4px;background:#f7f3df;color:#50705b;
+    border-radius:13px 13px 13px 4px;padding:8px 10px;opacity:0;visibility:hidden;transform:translateY(5px) scale(.92);
+    transition:.28s ease;box-shadow:0 8px 18px rgba(0,0,0,.12);z-index:6;
+  }
+  .thought-bubble span{width:4px;height:4px;border-radius:50%;background:#7e9a83;animation:typingBounce 1.2s infinite}
+  .thought-bubble span:nth-child(2){animation-delay:.15s}.thought-bubble span:nth-child(3){animation-delay:.3s}
+  .thought-bubble::after{
+    content:"";position:absolute;left:10px;bottom:-4px;width:8px;height:8px;background:#f7f3df;transform:rotate(45deg);border-radius:1px;
+  }
+  .mascot-stage.thinking .thought-bubble{opacity:1;visibility:visible;transform:none}
+  .mascot-stage.thinking .thought-bubble span{animation-play-state:running}
+  .mascot{position:relative;width:150px;height:132px;display:flex;align-items:flex-end;justify-content:center}
+  .mascot-shadow{position:absolute;bottom:1px;left:50%;transform:translateX(-50%);width:105px;height:16px;border-radius:50%;background:rgba(4,20,10,.24);filter:blur(4px)}
+  .sprout{
+    position:relative;width:124px;height:127px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+    transform-origin:50% 96%;animation:float 5.5s ease-in-out infinite;
+  }
+  .leaf-wrap{position:absolute;top:0;left:50%;transform:translateX(-50%);width:102px;height:47px;z-index:1}
+  .emoji-leaf{
+    position:absolute;font-size:27px;line-height:1;filter:drop-shadow(0 5px 7px rgba(5,24,12,.14));
+    transform-origin:bottom center;
+  }
+  .emoji-leaf.left{left:5px;top:10px;transform:rotate(-34deg)}
+  .emoji-leaf.right{right:4px;top:2px;transform:rotate(25deg) scale(.93)}
+  .stem{position:absolute;top:36px;left:50%;transform:translateX(-50%);width:3px;height:26px;border-radius:99px;background:linear-gradient(#8dbd8e,#c6ddaf);z-index:1}
+  .sprout-head{
+    position:relative;z-index:2;width:72px;height:65px;border-radius:25px 25px 24px 24px;
+    background:linear-gradient(150deg,#f6f4da 0%,#e8f0dc 60%,#d8e8d1 100%);
+    border:1px solid rgba(255,255,255,.45);
+    box-shadow:0 8px 16px rgba(4,23,12,.14),inset 0 1px 0 rgba(255,255,255,.8);
+    margin-top:4px;
+  }
+  .sprout-head::before{content:"";position:absolute;left:9px;top:9px;width:29px;height:12px;border-radius:50%;background:rgba(255,255,255,.46);transform:rotate(-22deg)}
+  .eye{position:absolute;top:26px;width:5px;height:7px;border-radius:50%;background:#355a42;transition:.2s}
+  .eye.left{left:21px}.eye.right{right:20px}
+  .sprout.eye-close .eye{height:2px;border-radius:99px;top:29px;animation:blink 4.6s infinite}
+  @keyframes blink{0%,94%,100%{transform:scaleY(1)}96%,98%{transform:scaleY(.25)}}
+  .cheek{position:absolute;top:37px;width:10px;height:5px;border-radius:50%;background:rgba(218,147,122,.39)}
+  .cheek.left{left:13px}.cheek.right{right:12px}
+  .mouth{position:absolute;left:50%;top:36px;transform:translateX(-50%);width:13px;height:7px;border-bottom:2px solid #708c75;border-radius:0 0 9px 9px}
+  .sprout-body{
+    position:relative;z-index:1;width:48px;height:30px;border-radius:14px 14px 17px 17px;margin-top:-5px;
+    background:linear-gradient(150deg,#d5e8cb,#a9cfac);box-shadow:0 5px 10px rgba(5,22,12,.13);
+  }
+  .arm{position:absolute;top:8px;width:18px;height:8px;border-radius:99px;background:#c9e1c1;transform-origin:center}
+  .arm.left{left:-14px;transform:rotate(21deg)}
+  .arm.right{right:-14px;transform:rotate(-21deg)}
+  .pot{
+    position:relative;z-index:2;width:67px;height:28px;margin-top:-2px;clip-path:polygon(8% 0,92% 0,80% 100%,20% 100%);
+    background:linear-gradient(180deg,#dfcf9f,#c7b17d);box-shadow:0 3px 8px rgba(5,22,12,.13);
+  }
+  .pot::before{content:"";position:absolute;left:0;right:0;top:0;height:5px;background:#e8d9ae;border-bottom:1px solid rgba(255,255,255,.28)}
+  .pot::after{content:"";position:absolute;left:50%;bottom:5px;transform:translateX(-50%);width:14px;height:2px;border-radius:99px;background:rgba(130,103,56,.28)}
+  .spark{position:absolute;color:#f2e6b7;font-size:9px;opacity:.6;animation:twinkle 3s ease-in-out infinite}
+  .spark.s1{left:12%;top:43%;font-size:8px;animation-delay:-1s}
+  .spark.s2{right:11%;top:31%;animation-delay:-2s}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+  @keyframes twinkle{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:.8;transform:scale(1.08)}}
+  .mascot.thinking .sprout{animation:thinkSway 1.7s ease-in-out infinite}
+  .mascot.thinking .emoji-leaf.left{animation:leafWave 1.7s ease-in-out infinite}
+  .mascot.thinking .emoji-leaf.right{animation:leafWave 1.7s ease-in-out infinite reverse}
+  @keyframes thinkSway{0%,100%{transform:rotate(-2.2deg) translateY(0)}50%{transform:rotate(2.2deg) translateY(-2px)}}
+  @keyframes leafWave{0%,100%{rotate:0deg}50%{rotate:7deg}}
+  .mascot-status{
+    position:relative;z-index:2;display:flex;align-items:center;justify-content:center;gap:6px;
+    font-size:8px;color:rgba(210,238,215,.62);margin-top:1px;min-height:12px;text-align:center;
+  }
+  .mascot-status .tiny-dot{width:4px;height:4px;border-radius:50%;background:#85bd90}
+  .mascot-stage.thinking + .mascot-status .tiny-dot{background:#e4cd8d;animation:pulse 1s infinite}
+  .live-strip{
+    position:relative;z-index:2;display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px;
+    background:rgba(255,255,255,.075);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:8px;
+  }
+  .live-cell{padding:1px 5px;display:flex;flex-direction:column;gap:3px;min-width:0}
+  .live-cell + .live-cell{border-left:1px solid rgba(255,255,255,.1);padding-left:11px}
+  .live-cell span{font-size:8px;color:rgba(213,237,217,.5);letter-spacing:.04em}
+  .live-cell strong{font-family:var(--font-display);font-size:14.5px;font-weight:700;color:#edf7e9;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .live-cell strong small{font-size:7px;color:rgba(210,237,214,.55);font-weight:500;margin-left:1px}
+  .live-cell .mini-level{font-family:var(--font-body);font-size:7px;color:#d9e9b8;background:rgba(231,211,142,.15);border-radius:3px;padding:2px 4px;margin-left:4px;font-weight:600;vertical-align:2px}
+
+  .preset-card{
+    flex:1;min-height:0;display:flex;flex-direction:column;border-radius:26px;padding:16px 15px 12px;
+    background:rgba(255,255,251,.83);
+  }
+  .preset-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-shrink:0;padding:0 2px 10px}
+  .preset-title{display:flex;align-items:center;gap:8px}
+  .preset-title .p-icon{width:25px;height:25px;border-radius:8px;display:grid;place-items:center;background:#edf6e9;color:#558765;flex:0 0 25px}
+  .preset-title .p-icon svg{width:13px;height:13px}
+  .preset-title h2{font-family:var(--font-display);font-size:13.5px;font-weight:740;color:#2a5038;letter-spacing:-.015em}
+  .preset-title p{margin-top:2px;font-size:8px;color:#96a69a}
+  .preset-hint{font-size:7.5px;color:#a0afa3;white-space:nowrap;padding-top:4px}
+  .preset-list{display:flex;flex-direction:column;gap:6px;min-height:0;overflow-y:auto;padding:1px 2px 5px;scrollbar-width:thin;scrollbar-color:rgba(69,126,84,.2) transparent}
+  .preset-list::-webkit-scrollbar{width:4px}
+  .preset-list::-webkit-scrollbar-thumb{background:rgba(69,126,84,.18);border-radius:99px}
+  .preset-btn{
+    display:flex;align-items:center;gap:9px;text-align:left;width:100%;min-height:50px;padding:8px 9px;
+    border-radius:11px;border:1px solid rgba(255,255,255,.82);background:rgba(247,251,244,.78);
+    transition:background .2s ease,transform .2s ease,border-color .2s ease;position:relative;
+  }
+  .preset-btn:hover{background:#fffef9;transform:translateX(2px);border-color:rgba(124,175,135,.24);box-shadow:0 7px 16px rgba(37,82,51,.05)}
+  .preset-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  .preset-icon{
+    width:25px;height:25px;border-radius:8px;display:grid;place-items:center;flex:0 0 25px;
+    background:#e9f4e5;color:#5b8a69;
+  }
+  .preset-icon svg{width:13px;height:13px}
+  .preset-copy{min-width:0;flex:1;display:flex;flex-direction:column;gap:2px}
+  .preset-copy strong{font-size:10px;font-weight:700;color:#496a54;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .preset-copy small{font-size:8px;color:#9aab9e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .preset-arrow{width:12px;height:12px;color:#a4b6a8;flex-shrink:0;transition:transform .2s ease,color .2s ease}
+  .preset-btn:hover .preset-arrow{transform:translateX(2px);color:#618d70}
+  .preset-foot{
+    flex-shrink:0;display:flex;align-items:center;gap:5px;border-top:1px solid rgba(38,83,54,.07);
+    padding:8px 3px 0;margin-top:2px;font-size:7.5px;color:#a4b3a8;letter-spacing:.01em;
+  }
+  .preset-foot svg{width:10px;height:10px;color:#9aac9e}
+
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+  /* ---------- Toast ---------- */
+  .toast-stack{position:fixed;right:18px;top:18px;z-index:100;display:flex;flex-direction:column;gap:8px;width:min(328px,calc(100vw - 30px));pointer-events:none}
+  .toast{
+    display:flex;align-items:flex-start;gap:9px;background:rgba(255,255,252,.97);border:1px solid rgba(255,255,255,.9);
+    border-radius:14px;padding:11px 12px;box-shadow:0 16px 38px rgba(29,65,41,.17);pointer-events:auto;
+    animation:toastIn .28s ease both;backdrop-filter:blur(15px);
+  }
+  .toast.leaving{animation:toastOut .22s ease forwards}
+  .toast .t-icon{width:24px;height:24px;border-radius:8px;display:grid;place-items:center;flex:0 0 24px;background:#e9f5e9;color:#2f7b4d}
+  .toast.error .t-icon{background:#faebe8;color:#b24f43}
+  .toast.info .t-icon{background:#edf3ed;color:#5f7969}
+  .toast .t-icon svg{width:13px;height:13px}
+  .toast strong{display:block;font-size:10.5px;color:#234532}
+  .toast p{margin-top:2px;font-size:9.5px;line-height:1.5;color:#728579}
+  .toast .t-close{border:0;background:transparent;color:#a0aea4;font-size:15px;line-height:1;padding:0 1px;flex:0 0 auto}
+  @keyframes toastIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+  @keyframes toastOut{to{opacity:0;transform:translateX(16px)}}
+
+  @keyframes rise{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+
+  @media (max-width:1000px){
+    .ai-page{padding-left:22px;padding-right:22px}
+    .ai-grid{grid-template-columns:minmax(0,1.5fr) minmax(300px,.8fr)}
+    .context-chip{display:none}
+    .head-title h1{font-size:17px;white-space:normal}
+  }
+  @media (max-height:840px) and (min-width:981px){
+    .ai-page{padding-top:14px;padding-bottom:16px;gap:10px}
+    .mascot-card{min-height:292px;padding:14px 17px 11px}
+    .mascot-intro{margin-top:5px}
+    .mascot-intro h2{font-size:16px}
+    .mascot-intro p{font-size:8.5px;margin-top:3px}
+    .mascot-stage{height:112px;margin-top:0}
+    .mascot{transform:scale(.9);transform-origin:bottom center}
+    .mascot-status{font-size:7.5px}
+    .live-strip{margin-top:6px;padding:7px}
+    .side-col{gap:10px}
+    .preset-card{padding:12px 12px 9px}
+    .preset-head{padding-bottom:7px}
+    .preset-btn{min-height:43px;padding:6px 8px;gap:8px}
+    .preset-copy strong{font-size:9.5px}
+    .preset-copy small{font-size:7.5px}
+    .preset-list{gap:5px}
+    .preset-foot{padding-top:6px;margin-top:0;font-size:7px}
+  }
+  @media (max-width:980px){
+    body{overflow:auto}
+    .ai-page{height:auto;min-height:100dvh;padding:16px 16px 22px}
+    .ai-head{align-items:flex-start}
+    .head-clock{display:none}
+    .ai-grid{grid-template-columns:1fr;min-height:0}
+    .chat-card{min-height:610px;height:min(75vh,700px)}
+    .side-col{display:grid;grid-template-columns:1fr 1fr;min-height:0}
+    .mascot-card{min-height:380px}
+    .preset-card{min-height:380px}
+    .back-leaf{display:none}
+  }
+  @media (max-width:720px){
+    .ai-page{padding:12px 11px 18px;gap:11px}
+    .ai-head{padding:0 3px;gap:10px}
+    .brand-mark{width:35px;height:35px;flex-basis:35px;border-radius:11px}
+    .brand-mark svg{width:19px;height:19px}
+    .brand-text strong{font-size:13px}
+    .brand-text span{display:none}
+    .brand-text{display:none}
+    .head-divider{display:none}
+    .brand-mark{display:none}
+    .head-left{gap:0;width:100%;flex:1 1 100%}
+    .head-title{width:100%}
+    .head-title h1{font-size:16.5px;margin-top:3px;white-space:normal;line-height:1.35;max-width:100%}
+    .head-title .eyebrow{letter-spacing:.12em;font-size:7.5px}
+    .head-right{display:none}
+    .service-pill{display:none}
+    .ai-grid{gap:10px}
+    .chat-card{min-height:560px;height:calc(100dvh - 104px);max-height:690px;border-radius:22px}
+    .chat-head{height:58px;padding:0 13px}
+    .ai-avatar{width:33px;height:33px;flex-basis:33px;border-radius:10px}
+    .ai-avatar svg{width:18px;height:18px}
+    .identity-copy h2{font-size:11.5px}
+    .identity-copy h2 .tiny-tag{display:none}
+    .identity-copy p{font-size:7px}
+    .chat-scroll{padding:15px 13px 6px}
+    .msg-content{max-width:84%}
+    .bubble{font-size:10.5px;padding:10px 12px;line-height:1.8}
+    .msg-avatar{width:25px;height:25px;flex-basis:25px;margin-top:13px;border-radius:8px}
+    .chat-composer{padding:8px 11px 10px}
+    .composer-inner{padding-left:11px}
+    .composer-hint{display:none}
+    .composer-count{font-size:6.5px}
+    .send-btn{min-width:30px;width:34px;height:34px;padding:0;border-radius:9px;font-size:0;gap:0}
+    .send-btn svg{width:15px;height:15px}
+    .side-col{grid-template-columns:1fr}
+    .mascot-card{min-height:365px;border-radius:22px}
+    .preset-card{min-height:auto;border-radius:22px}
+    .preset-list{overflow:visible}
+    .preset-copy strong{font-size:9px;white-space:normal}
+    .toast-stack{right:11px;top:11px;width:calc(100vw - 22px)}
+  }
+  @media (max-width:420px){
+    .head-title h1{font-size:15.5px}
+    .chat-card{height:calc(100dvh - 90px);min-height:540px}
+    .mascot-card{padding:15px}
+    .mascot-intro h2{font-size:16px}
+    .thought-bubble{right:1%}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important}
+    .chat-scroll{scroll-behavior:auto}
+  }
+</style>
+</head>
+<body>
+<div class="topography" aria-hidden="true">
+  <svg viewBox="0 0 900 900" fill="none">
+    <g stroke="#8eb99a" stroke-width="1" opacity=".18">
+      <path d="M74 487c112-82 205-139 343-151 139-12 267 16 394 94"/>
+      <path d="M48 526c126-84 238-144 378-152 135-8 261 29 410 113"/>
+      <path d="M21 566c142-82 264-145 412-149 140-4 279 45 434 137"/>
+      <path d="M-8 609c156-82 290-146 448-143 144 3 288 65 443 165"/>
+      <path d="M-30 654c169-83 314-145 484-134 146 9 288 82 438 195"/>
+      <path d="M-38 704c182-84 332-142 516-120 150 18 288 98 426 222"/>
+      <path d="M-32 758c193-87 348-135 541-100 141 26 272 112 401 241"/>
+      <path d="M-12 813c203-88 361-126 556-78 126 31 245 116 356 244"/>
+      <path d="M23 873c205-88 365-112 558-53 107 33 215 108 303 210"/>
+    </g>
+    <circle cx="660" cy="184" r="118" fill="none" stroke="#dcb96e" stroke-width="1" opacity=".16"/>
+    <circle cx="660" cy="184" r="78" fill="none" stroke="#dcb96e" stroke-width="1" opacity=".12"/>
+    <circle cx="660" cy="184" r="155" fill="none" stroke="#8eb99a" stroke-width="1" opacity=".08"/>
+  </svg>
+</div>
+<div class="back-leaf a" aria-hidden="true"><svg viewBox="0 0 100 100"><path d="M86 11C49 13 24 33 18 66c-2 11 1 18 4 23 9 1 17-1 25-5 26-13 36-40 40-69 .2-1-.1-3-1-4Z" fill="#7fad88"/><path d="M21 82C37 55 53 38 75 25" fill="none" stroke="#f7fbf4" stroke-width="2.2" stroke-linecap="round" opacity=".7"/></svg></div>
+<div class="back-leaf b" aria-hidden="true"><svg viewBox="0 0 100 100"><path d="M86 11C49 13 24 33 18 66c-2 11 1 18 4 23 9 1 17-1 25-5 26-13 36-40 40-69 .2-1-.1-3-1-4Z" fill="#86b28f"/><path d="M21 82C37 55 53 38 75 25" fill="none" stroke="#f7fbf4" stroke-width="2.2" stroke-linecap="round" opacity=".7"/></svg></div>
+
+<main class="ai-page">
+  <header class="ai-head">
+    <div class="head-left">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" fill="none"><path d="M26.4 5.3C17.7 6.2 11.8 11 10.3 19.6c-.3 1.8-.2 3.1.1 4.3 1.4.2 2.7.1 4.1-.2 8.6-1.7 13-7.6 13.9-16.6.1-1-.9-1.9-2-1.8Z" fill="currentColor"/><path d="M7.4 27.2c2.5-6.7 6.6-11 13.3-14.1" stroke="#f7fbf3" stroke-width="1.8" stroke-linecap="round" opacity=".82"/></svg>
+      </span>
+      <div class="brand-text"><strong>智慧茶园</strong><span>TEA MENTOR</span></div>
+      <span class="head-divider" aria-hidden="true"></span>
+      <div class="head-title">
+        <span class="eyebrow"><svg class="spark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 2.8c.5 3.8 2.3 5.6 6.1 6.1-3.8.5-5.6 2.3-6.1 6.1-.5-3.8-2.3-5.6-6.1-6.1 3.8-.5 5.6-2.3 6.1-6.1Z" stroke-linejoin="round"/></svg>AI 农事顾问 · 前端演示</span>
+        <h1>和茶苗聊聊，<em>把霜冻挡在茶园外。</em></h1>
+      </div>
+    </div>
+    <div class="head-right">
+      <span class="service-pill live" id="servicePill"><span class="dot"></span><span id="serviceText">当前为前端演示模式</span></span>
+      <div class="head-clock" aria-label="当前时间"><span id="headDate">--月--日</span><strong id="headTime">--:--</strong></div>
+    </div>
+  </header>
+
+  <section class="ai-grid">
+    <article class="chat-card panel" aria-label="与茶苗 AI 对话">
+      <header class="chat-head">
+        <div class="ai-identity">
+          <div class="ai-avatar" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M19.5 4.2C13.6 4.8 9.5 8 8.6 13.8c-.1 1 0 1.8.2 2.5.9.1 1.7 0 2.4-.2 5.3-1 8.1-4.7 8.7-10.2.1-.7-.6-1.2-1.2-1.2Z" stroke-linejoin="round"/><path d="M4.8 21c1.5-5.2 4.6-8.6 9.8-11.1" stroke-linecap="round"/></svg>
+          </div>
+          <div class="identity-copy">
+            <h2>茶苗 AI <span class="tiny-tag">TEA MENTOR</span></h2>
+            <p><span class="s-dot"></span><span id="chatStatus">前端演示模式 · 已载入本地知识库</span></p>
+          </div>
+        </div>
+        <div class="chat-tools">
+          <span class="context-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3.7 12h4l2.1-5.2 4.2 10.4 2.1-5.2h4.4" stroke-linecap="round" stroke-linejoin="round"/></svg>已载入本地演示上下文</span>
+          <button type="button" class="tool-btn" id="clearChat" title="清空当前对话" aria-label="清空当前对话">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M4.5 6.5h15M9 3.8v2.7M15 3.8v2.7M6.4 6.5l.9 13.1c.1 1 .9 1.7 1.8 1.7h5.8c1 0 1.7-.7 1.8-1.7l.9-13.1M10 10.6v6.8M14 10.6v6.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="chat-scroll" id="chatScroll">
+        <div class="date-divider">今天 · 本地演示数据已就绪</div>
+        <div id="messageList"></div>
+      </div>
+
+      <footer class="chat-composer">
+        <div class="composer-inner">
+          <textarea id="questionInput" rows="1" maxlength="500" placeholder="问问茶苗：今晚会不会有霜冻？" aria-label="输入你的问题"></textarea>
+          <button type="button" class="send-btn" id="sendBtn" disabled>
+            <span>发送</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="m4 12 16-7-5.2 14-3.1-5.7L4 12Z" stroke-linejoin="round"/><path d="m11.7 13.3 3.5-3.5" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <div class="composer-meta">
+          <span class="composer-hint"><kbd>Enter</kbd> 发送 · <kbd>Shift</kbd> + <kbd>Enter</kbd> 换行</span>
+          <span class="composer-count" id="charCount">0 / 500</span>
+        </div>
+      </footer>
+    </article>
+
+    <aside class="side-col" aria-label="茶苗互动与快捷提问">
+      <section class="mascot-card" aria-label="茶苗小助手">
+        <div class="mascot-top">
+          <span class="mascot-kicker"><span class="dot"></span>TEA SPROUT · 霜冻守护者</span>
+          <span class="mascot-state" id="mascotState">茶苗在听</span>
+        </div>
+        <div class="mascot-intro">
+          <h2>霜冻来之前，<br><em>先问我一句。</em></h2>
+          <p>我会结合本地演示数据，把复杂的防冻知识说成茶农听得懂的话。</p>
+        </div>
+
+        <div class="mascot-stage">
+          <div class="mascot-halo" aria-hidden="true"></div>
+          <div class="thought-bubble" aria-hidden="true"><span></span><span></span><span></span></div>
+          <span class="spark s1" aria-hidden="true">✦</span>
+          <span class="spark s2" aria-hidden="true">✦</span>
+          <div class="mascot" id="mascot">
+            <div class="mascot-shadow" aria-hidden="true"></div>
+            <div class="sprout eye-close">
+              <div class="leaf-wrap" aria-hidden="true">
+                <span class="emoji-leaf left">🍃</span>
+                <span class="emoji-leaf right">🍃</span>
+              </div>
+              <div class="stem" aria-hidden="true"></div>
+              <div class="sprout-head" aria-hidden="true">
+                <span class="eye left"></span><span class="eye right"></span>
+                <span class="cheek left"></span><span class="cheek right"></span>
+                <span class="mouth"></span>
+              </div>
+              <div class="sprout-body" aria-hidden="true"><span class="arm left"></span><span class="arm right"></span></div>
+              <div class="pot" aria-hidden="true"></div>
+            </div>
+          </div>
+        </div>
+        <div class="mascot-status" id="mascotStatus" aria-live="polite"><span class="tiny-dot"></span><span id="mascotLine">茶苗在听 · 想聊什么都可以</span></div>
+
+        <div class="live-strip" aria-label="茶园实况快照">
+          <div class="live-cell"><span>当前温度</span><strong id="liveTemp">8.4<small>℃</small></strong></div>
+          <div class="live-cell"><span>霜冻风险</span><strong id="liveRisk">45<span class="mini-level" id="liveRiskLevel">需关注</span></strong></div>
+        </div>
+      </section>
+
+      <section class="preset-card panel">
+        <div class="preset-head">
+          <div class="preset-title">
+            <span class="p-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3.8c.4 3.5 2 5.1 5.5 5.5-3.5.4-5.1 2-5.5 5.5-.4-3.5-2-5.1-5.5-5.5 3.5-.4 5.1-2 5.5-5.5Z" stroke-linejoin="round"/><path d="M18.4 15.5c.2 1.7 1 2.5 2.7 2.7-1.7.2-2.5 1-2.7 2.7-.2-1.7-1-2.5-2.7-2.7 1.7-.2 2.5-1 2.7-2.7Z" stroke-linejoin="round"/></svg></span>
+            <div><h2>快捷提问</h2><p>点击即刻发送给茶苗</p></div>
+          </div>
+          <span class="preset-hint">QUICK ASK</span>
+        </div>
+        <div class="preset-list" id="presetList">
+          <button type="button" class="preset-btn" data-question="今晚茶园有霜冻风险吗？">
+            <span class="preset-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9.3 13.8V5.6a2.7 2.7 0 0 1 5.4 0v8.2a4.8 4.8 0 1 1-5.4 0Z" stroke-linejoin="round"/><path d="M12 9v6.2" stroke-linecap="round"/></svg></span>
+            <span class="preset-copy"><strong>今晚茶园有霜冻风险吗？</strong><small>结合当前温度与湿度研判</small></span>
+            <svg class="preset-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 12h15M13.5 6.5 19 12l-5.5 5.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button type="button" class="preset-btn" data-question="茶叶冻伤怎么补救？">
+            <span class="preset-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9.5 4.2 7.8 8.1 4 6.4l1.7 3.9L2.5 12l3.2 1.7L4 17.6l3.8-1.7 1.7 3.9 1.7-3.9 3.8 1.7-1.7-3.9L16.5 12l-3.2-1.7 1.7-3.9-3.8 1.7Z" stroke-linejoin="round" transform="translate(2.5 1.5) scale(.84)"/></svg></span>
+            <span class="preset-copy"><strong>茶叶冻伤怎么补救？</strong><small>修剪、施肥与留养建议</small></span>
+            <svg class="preset-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 12h15M13.5 6.5 19 12l-5.5 5.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button type="button" class="preset-btn" data-question="最低温多少度需要熏烟防冻？">
+            <span class="preset-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5.5 20h13M7.5 17.5c-2.4-2.2-2.4-5.7 0-7.9 1.1-1.1 2.9-1.8 4.5-1.4M16.5 17.5c2.4-2.2 2.4-5.7 0-7.9-1.1-1.1-2.9-1.8-4.5-1.4" stroke-linecap="round"/><path d="M12 8.5c-.8-2.2.2-4 2-5.2.4 2.2-.4 3.7-2 5.2Z" stroke-linejoin="round"/></svg></span>
+            <span class="preset-copy"><strong>几度需要熏烟防冻？</strong><small>临界温度与安全操作</small></span>
+            <svg class="preset-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 12h15M13.5 6.5 19 12l-5.5 5.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button type="button" class="preset-btn" data-question="霜冻来临前茶园要做哪些准备？">
+            <span class="preset-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8.5 3.8h7a1 1 0 0 1 1 1v16l-4.5-2.5L7.5 20.8v-16a1 1 0 0 1 1-1Z" stroke-linejoin="round"/><path d="m9.7 9 1.6 1.6 3.1-3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span class="preset-copy"><strong>霜冻前茶园要做哪些准备？</strong><small>一份实用的防冻清单</small></span>
+            <svg class="preset-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 12h15M13.5 6.5 19 12l-5.5 5.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button type="button" class="preset-btn" data-question="明早采茶前要注意什么？">
+            <span class="preset-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4.5 19.5c.5-6 3.7-9.2 9.5-9.6M13.8 9.6c3.9.1 6.1-1.9 6.7-5.8-3.9-.5-6.4 1.2-6.7 5.8ZM9.2 14.7c-2.1-1.5-4.3-1.2-6.2.8 1.8 2.2 3.9 2.7 6.2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span class="preset-copy"><strong>明早采茶前要注意什么？</strong><small>霜露、叶面与采摘时机</small></span>
+            <svg class="preset-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 12h15M13.5 6.5 19 12l-5.5 5.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <div class="preset-foot">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 10.8v5M12 8.3v.2" stroke-linecap="round"/></svg>
+          AI 建议仅供参考，极端天气请以当地气象预警为准
+        </div>
+      </section>
+    </aside>
+  </section>
+</main>
+
+<div class="toast-stack" id="toastStack" aria-live="polite"></div>
+<div class="sr-only" id="srStatus" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var AUTH_KEY = 'tea_user';
+  var NAME_PREFIX = 'tea_auth:';
+  var MAX_INPUT = 500;
+  var DEMO_CONTEXT = { risk: 45, temp: 8.4 };
+  var state = {
+    busy: false,
+    service: 'demo',
+    risk: DEMO_CONTEXT.risk,
+    temp: DEMO_CONTEXT.temp,
+    typingTimer: null,
+    listeners: 0
+  };
+  var reducedMotion = false;
+  try { reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (err) {}
+
+  var el = {
+    chatScroll: document.getElementById('chatScroll'),
+    messageList: document.getElementById('messageList'),
+    input: document.getElementById('questionInput'),
+    sendBtn: document.getElementById('sendBtn'),
+    charCount: document.getElementById('charCount'),
+    mascot: document.getElementById('mascot'),
+    mascotState: document.getElementById('mascotState'),
+    mascotLine: document.getElementById('mascotLine'),
+    mascotStatus: document.getElementById('mascotStatus'),
+    servicePill: document.getElementById('servicePill'),
+    serviceText: document.getElementById('serviceText'),
+    chatStatus: document.getElementById('chatStatus'),
+    srStatus: document.getElementById('srStatus'),
+    toastStack: document.getElementById('toastStack'),
+    presetButtons: document.querySelectorAll('.preset-btn')
+  };
+
+  /* ---------- 登录拦截 ---------- */
+  function readLocalUser() {
+    try {
+      var raw = localStorage.getItem(AUTH_KEY);
+      var user = raw ? JSON.parse(raw) : null;
+      return user && user.username ? user : null;
+    } catch (err) { return null; }
+  }
+  function readNameUser() {
+    try {
+      var raw = window.name || '';
+      if (raw.indexOf(NAME_PREFIX) !== 0) return null;
+      var user = JSON.parse(decodeURIComponent(raw.slice(NAME_PREFIX.length)));
+      return user && user.username ? user : null;
+    } catch (err) { return null; }
+  }
+  var embedded = false;
+  try { embedded = window.self !== window.top; } catch (err) { embedded = true; }
+  var currentUser = readLocalUser() || readNameUser();
+  if (!currentUser && !embedded) {
+    window.location.replace('index.html');
+    return;
+  }
+  if (currentUser) {
+    try { localStorage.setItem(AUTH_KEY, JSON.stringify(currentUser)); } catch (err) {}
+  }
+  document.body.classList.add('is-ready');
+  window.addEventListener('message', function (event) {
+    var data = event && event.data;
+    if (data && data.type === 'tea:auth' && data.user && data.user.username) {
+      try { localStorage.setItem(AUTH_KEY, JSON.stringify(data.user)); } catch (err) {}
+    }
+  });
+
+  /* ---------- 基础工具 ---------- */
+  var userName = (currentUser && currentUser.username) || '你';
+  var userInitial = String(userName).replace(/\s/g, '').slice(0, 1) || '你';
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function nowTime() { var d = new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+  function escapeHtml(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function (char) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char];
+    });
+  }
+  function scrollToBottom(force) {
+    var node = el.chatScroll;
+    if (!node) return;
+    var nearBottom = node.scrollHeight - node.scrollTop - node.clientHeight < 150;
+    if (force || nearBottom) node.scrollTop = node.scrollHeight;
+  }
+  function announce(text) {
+    if (el.srStatus) el.srStatus.textContent = text;
+  }
+  function updateClock() {
+    var now = new Date();
+    var dateNode = document.getElementById('headDate');
+    var timeNode = document.getElementById('headTime');
+    if (dateNode) dateNode.textContent = (now.getMonth() + 1) + '月' + now.getDate() + '日';
+    if (timeNode) timeNode.textContent = pad(now.getHours()) + ':' + pad(now.getMinutes());
+  }
+  updateClock();
+  setInterval(updateClock, 20000);
+
+  function toast(type, title, message) {
+    var icons = {
+      success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+      error: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4.5M12 16.4v.4"/></svg>',
+      info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.2"/></svg>'
+    };
+    var node = document.createElement('div');
+    node.className = 'toast ' + (type || 'info');
+    node.innerHTML = '<span class="t-icon">' + (icons[type] || icons.info) + '</span><div><strong></strong><p></p></div><button type="button" class="t-close" aria-label="关闭">×</button>';
+    node.querySelector('strong').textContent = title;
+    node.querySelector('p').textContent = message;
+    el.toastStack.appendChild(node);
+    var close = function () {
+      if (node.classList.contains('leaving')) return;
+      node.classList.add('leaving');
+      setTimeout(function () { node.remove(); }, 230);
+    };
+    node.querySelector('.t-close').addEventListener('click', close);
+    setTimeout(close, 3700);
+  }
+
+  /* ---------- 状态 ---------- */
+  function setServiceState() {
+    if (!el.servicePill) return;
+    el.servicePill.classList.remove('offline');
+    el.servicePill.classList.add('live');
+    if (el.serviceText) el.serviceText.textContent = '当前为前端演示模式';
+    if (el.chatStatus) {
+      el.chatStatus.textContent = '前端演示模式 · 已载入本地知识库';
+    }
+  }
+
+  function setMascot(mode) {
+    if (!el.mascot) return;
+    el.mascot.classList.toggle('thinking', mode === 'thinking');
+    if (el.mascot.parentElement) el.mascot.parentElement.classList.toggle('thinking', mode === 'thinking');
+    if (el.mascotState) {
+      el.mascotState.classList.toggle('thinking', mode === 'thinking');
+      el.mascotState.textContent = mode === 'thinking' ? '茶苗正在想…' : mode === 'error' ? '茶苗有点迷糊' : '茶苗在听';
+    }
+    if (el.mascotLine) {
+      el.mascotLine.textContent = mode === 'thinking'
+        ? '正在整理本地演示建议，稍等一下下…'
+        : mode === 'error'
+          ? '演示回复遇到一点小问题，再试一次吧。'
+          : '茶苗在听 · 想聊什么都可以';
+    }
+  }
+
+  function setBusy(busy) {
+    state.busy = busy;
+    el.input.disabled = false;
+    Array.prototype.forEach.call(el.presetButtons, function (btn) { btn.disabled = busy; });
+    document.getElementById('clearChat').disabled = busy;
+    updateSendBtn();
+  }
+
+  function updateSendBtn() {
+    if (!el.sendBtn) return;
+    var hasText = el.input.value.trim().length > 0;
+    el.sendBtn.disabled = state.busy || !hasText;
+  }
+
+  function updateCharCount() {
+    var len = el.input.value.length;
+    if (el.charCount) {
+      el.charCount.textContent = len + ' / ' + MAX_INPUT;
+      el.charCount.classList.toggle('near', len > MAX_INPUT * 0.86);
+    }
+  }
+
+  function resizeInput() {
+    el.input.style.height = 'auto';
+    el.input.style.height = Math.min(90, Math.max(25, el.input.scrollHeight)) + 'px';
+  }
+
+  /* ---------- 消息渲染 ---------- */
+  function formatAIText(text) {
+    var safe = escapeHtml(String(text || '').replace(/\r\n/g, '\n').trim());
+    safe = safe.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    safe = safe.replace(/^###\s*(.+)$/gm, '<span class="b-heading">$1</span>');
+    safe = safe.replace(/^\s*[-•]\s+(.+)$/gm, '<span class="b-li">$1</span>');
+    safe = safe.replace(/\n{3,}/g, '\n\n');
+    return safe.replace(/\n/g, '<br>');
+  }
+
+  function createMessageRow(role) {
+    var row = document.createElement('div');
+    row.className = 'msg-row ' + role + (role === 'ai' ? ' ai-row' : '');
+    var avatar = document.createElement('div');
+    avatar.className = 'msg-avatar ' + role;
+    if (role === 'ai') {
+      avatar.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M19.5 4.2C13.6 4.8 9.5 8 8.6 13.8c-.1 1 0 1.8.2 2.5.9.1 1.7 0 2.4-.2 5.3-1 8.1-4.7 8.7-10.2.1-.7-.6-1.2-1.2-1.2Z" stroke-linejoin="round"/><path d="M4.8 21c1.5-5.2 4.6-8.6 9.8-11.1" stroke-linecap="round"/></svg>';
+    } else {
+      avatar.textContent = userInitial;
+    }
+    var content = document.createElement('div');
+    content.className = 'msg-content';
+    var meta = document.createElement('div');
+    meta.className = 'msg-meta';
+    var name = document.createElement('strong');
+    name.textContent = role === 'ai' ? '茶苗' : '你';
+    var time = document.createElement('span');
+    time.textContent = nowTime();
+    meta.appendChild(name);
+    meta.appendChild(time);
+    var bubble = document.createElement('div');
+    bubble.className = 'bubble ' + (role === 'ai' ? 'ai-bubble' : 'user-bubble');
+    var text = document.createElement('div');
+    text.className = 'bubble-text';
+    bubble.appendChild(text);
+    var actions = document.createElement('div');
+    actions.className = 'msg-actions';
+    content.appendChild(meta);
+    content.appendChild(bubble);
+    content.appendChild(actions);
+    row.appendChild(avatar);
+    row.appendChild(content);
+    el.messageList.appendChild(row);
+    return { row: row, content: content, bubble: bubble, text: text, actions: actions };
+  }
+
+  function addUserMessage(text) {
+    var node = createMessageRow('user');
+    node.text.textContent = text;
+    scrollToBottom(true);
+  }
+
+  function addAIMessage(text, options) {
+    var opts = options || {};
+    var node = createMessageRow('ai');
+    node.text.textContent = text;
+    if (opts.demo) {
+      var tag = document.createElement('span');
+      tag.className = 'source-tag demo';
+      tag.textContent = '本地演示知识库';
+      node.actions.appendChild(tag);
+    } else if (opts.welcome) {
+      var tagW = document.createElement('span');
+      tagW.className = 'source-tag demo';
+      tagW.textContent = '本地演示知识库';
+      node.actions.appendChild(tagW);
+    }
+    var copy = document.createElement('button');
+    copy.type = 'button';
+    copy.className = 'copy-btn';
+    copy.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M15.5 5.5v-1a1 1 0 0 0-1-1h-9a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h1" stroke-linecap="round"/></svg>复制';
+    copy.addEventListener('click', function () {
+      copyText(String(text), function () { toast('success', '已复制', '茶苗的回答已复制到剪贴板。'); });
+    });
+    node.actions.appendChild(copy);
+    scrollToBottom(true);
+    announce('茶苗回复：' + String(text).slice(0, 80));
+    return node;
+  }
+
+  function addDateDivider(text) {
+    var divider = document.createElement('div');
+    divider.className = 'date-divider';
+    divider.textContent = text;
+    el.messageList.appendChild(divider);
+  }
+
+  function showThinking() {
+    var node = createMessageRow('ai');
+    node.row.classList.add('thinking-row');
+    node.bubble.classList.add('typing-bubble');
+    node.text.innerHTML = '<span class="typing-dots"><span></span><span></span><span></span></span><span class="typing-copy">茶苗正在整理本地演示建议…</span>';
+    node.bubble.classList.remove('ai-bubble');
+    node.bubble.classList.add('ai-bubble');
+    node.actions.style.display = 'none';
+    scrollToBottom(true);
+    announce('茶苗正在思考');
+    return node;
+  }
+
+  function removeNode(node) {
+    if (node && node.row && node.row.parentNode) node.row.parentNode.removeChild(node.row);
+  }
+
+  function copyText(text, done) {
+    function fail() {
+      var helper = document.createElement('textarea');
+      helper.value = text;
+      document.body.appendChild(helper);
+      helper.select();
+      try { document.execCommand('copy'); done(); } catch (err) { toast('error', '复制失败', '当前浏览器不支持剪贴板操作。'); }
+      helper.remove();
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(fail);
+    } else fail();
+  }
+
+  function wait(ms) {
+    return new Promise(function (resolve) { setTimeout(resolve, ms); });
+  }
+
+  function typewriter(node, fullText) {
+    return new Promise(function (resolve) {
+      var text = String(fullText || '');
+      if (reducedMotion || text.length < 2) {
+        node.text.textContent = text;
+        node.text.innerHTML = formatAIText(text);
+        scrollToBottom(true);
+        resolve();
+        return;
+      }
+      node.text.classList.add('typing');
+      var total = text.length;
+      var interval = 17;
+      var chunk = Math.max(1, Math.ceil(total / Math.max(60, Math.round(3200 / interval))));
+      var index = 0;
+      function step() {
+        index = Math.min(total, index + chunk);
+        node.text.textContent = text.slice(0, index);
+        scrollToBottom(false);
+        if (index < total) {
+          state.typingTimer = setTimeout(step, interval);
+        } else {
+          node.text.classList.remove('typing');
+          node.text.innerHTML = formatAIText(text);
+          scrollToBottom(true);
+          resolve();
+        }
+      }
+      step();
+    });
+  }
+
+  function buildDemoReply(question) {
+    var q = String(question || '');
+    var riskText = '当前为前端演示数据：茶园温度约 ' + Number(state.temp).toFixed(1) + '℃，霜冻风险指数 ' + state.risk + ' / 100（模拟）。';
+    var body;
+    if (/冻伤|补救|恢复/.test(q)) {
+      body = '**茶叶冻伤后的处理顺序：先判断、再修剪、后补养。**\n\n' +
+        '1. 先看冻伤程度：只有叶尖或边缘褐化的轻伤，可保留观察；枝条皮层发黑、芽头冻死较重。\n' +
+        '2. 不要立刻重剪：待气温稳定回升 3–5 天后再剪除明确枯死的枝条，避免剪口二次受冻。\n' +
+        '3. 轻伤以养为主：叶面可喷施磷酸二氢钾等叶面肥，帮助恢复树势，浓度按产品说明使用。\n' +
+        '4. 重冻茶园先留养：春茶采摘可适当延后，让茶树先恢复冠层，再逐步投入生产。\n' +
+        '5. 防病很关键：冻伤枝叶容易成为病害入口，及时清理病叶、保持通风排水。\n\n' +
+        '没有看到真实叶片照片时，以上只能作为一般性建议。最好剪一段典型枝条，请当地农技人员帮助判断。';
+    } else if (/熏烟|几度|多少度|临界/.test(q)) {
+      body = '**茶园防霜的关键温度是 3℃。**\n\n' +
+        '茶树的嫩芽在 3℃ 左右就可能受到低温伤害，0℃ 附近风险明显增加。通常把 3℃ 作为预警线，把 1–2℃ 以下作为需要启动应急防护的参考区间。\n\n' +
+        '如果采用熏烟：\n- 提前备好湿润的柴草、锯末等材料，不要在茶园内随意堆烧。\n- 在凌晨低温时段、风小且方向稳定时进行，注意防火和人员安全。\n- 熏烟只能减缓局部降温，不能替代覆盖、灌溉等综合措施。\n\n' + riskText + '\n\n具体点火时机请结合当地气象预报和茶园实测温度，别只盯一个数字。';
+    } else if (/采茶|明早|采摘/.test(q)) {
+      body = '**明早采茶前，先做这三件事：**\n\n' +
+        '1. 看叶面：先确认叶面没有结霜、冰晶或明显水渍。带霜的芽叶不要急着采，等太阳升起、霜化后再进园。\n' +
+        '2. 看芽头：受冻芽头会发暗、发软、失去光泽。轻冻可留养观察，严重冻死的芽叶应摘除并带出茶园。\n' +
+        '3. 看天气：如果凌晨还有低温预警，宁可推迟采摘时间，也不要让采下来的鲜叶在运输中反复受冻。\n\n' + riskText + '\n\n采茶机的刀片和收集袋也要提前检查，低温天气注意人员保暖和山路安全。';
+    } else if (/准备|清单|预防|倒春寒/.test(q)) {
+      body = '**霜冻来临前的茶园防冻清单：**\n\n' +
+        '1. 物资：防霜布、遮阳网、支架、压边绳、熏烟材料、温度计，提前放到茶园附近。\n' +
+        '2. 地形：检查通风口和排水沟，低洼地、北坡、风口位置是重点防护区。\n' +
+        '3. 土壤：傍晚适量补水能提升土壤热容量，但不要大水漫灌。\n' +
+        '4. 树体：幼龄茶园可培土、覆盖根颈；成龄茶园重点保护蓬面嫩芽。\n' +
+        '5. 值班：关注凌晨 2–5 点的温度变化，提前分好巡园人员。\n\n' +
+        '把“看天”变成“看数据”，你就能比霜冻早一步行动。';
+    } else if (/风险|霜冻|今晚|低温/.test(q)) {
+      body = '**今晚的霜冻判断，可以按这条线走：**\n\n' +
+        '当最低气温低于 3℃，同时湿度偏高、风速较小、天空少云时，辐射霜冻风险会明显上升；如果最低气温高于 3℃，通常不必过度担心。\n\n' +
+        riskText + '\n\n建议今晚 22:00 前完成防冻物资检查，凌晨 2:00–5:00 重点复看温度变化。如果温度逼近 3℃，先保护幼嫩茶篷和低洼地块，不要等结霜了才行动。';
+    } else {
+      body = '**茶苗的防霜小提示：**\n\n' +
+        '- 3℃ 是茶园需要重点关注的临界温度。\n- 低温叠加高湿、静风、少云，是霜冻更容易发生的组合。\n- 防冻要提前做：覆盖、熏烟、补水、培土，哪一项都比“等霜来了再说”有效。\n- 冻伤后先观察再修剪，不要急着大幅度修剪。\n\n' +
+        riskText + '\n\n你也可以具体问我：今晚的风险、冻伤补救、熏烟温度、采茶注意事项。';
+    }
+    return '【本地演示知识库】\n当前为前端演示模式，以下是茶苗根据本地防霜手册整理的参考建议：\n\n' + body + '\n\n以上建议仅供参考，请结合茶园实际与当地农技指导判断。';
+  }
+
+  function askDemo(question) {
+    return wait(900 + Math.floor(Math.random() * 500)).then(function () {
+      return buildDemoReply(question);
+    });
+  }
+
+  function addWelcomeMessage() {
+    var welcome = '你好呀，我是茶苗 🍃\n今天也在替你看守这片茶园。\n\n你可以问我今晚的霜冻风险、茶园防冻准备、茶叶冻伤补救，或者明早采茶前的注意事项。';
+    var node = addAIMessage(welcome, { welcome: true });
+    node.row.style.animationDelay = '0.05s';
+  }
+
+  /* ---------- 发送 ---------- */
+  function sendQuestion(rawText) {
+    var question = String(rawText == null ? el.input.value : rawText).trim();
+    if (!question || state.busy) {
+      if (state.busy) toast('info', '茶苗正在思考', '请等茶苗把这一条回答完，再继续提问吧。');
+      return;
+    }
+    if (question.length > MAX_INPUT) question = question.slice(0, MAX_INPUT);
+    setBusy(true);
+    setMascot('thinking');
+    addUserMessage(question);
+    if (!rawText) el.input.value = '';
+    updateCharCount();
+    resizeInput();
+    updateSendBtn();
+    var thinkingNode = showThinking();
+    askDemo(question)
+      .then(function (answer) {
+        removeNode(thinkingNode);
+        setServiceState();
+        var node = addAIMessage(answer, { demo: true });
+        return typewriter(node, answer).then(function () {
+          setBusy(false);
+          setMascot('idle');
+          announce('茶苗已回答');
+        });
+      });
+  }
+
+  function clearChat() {
+    if (state.busy) return;
+    if (state.typingTimer) { clearTimeout(state.typingTimer); state.typingTimer = null; }
+    el.messageList.innerHTML = '';
+    addWelcomeMessage();
+    toast('info', '对话已清空', '茶苗已经准备好，重新开始聊吧。');
+  }
+
+  /* ---------- 读取本地面板上下文 ---------- */
+  function loadWeatherContext() {
+    state.risk = DEMO_CONTEXT.risk;
+    state.temp = DEMO_CONTEXT.temp;
+    state.service = 'demo';
+    setServiceState();
+    renderLiveContext();
+  }
+
+  function renderLiveContext() {
+    var tempNode = document.getElementById('liveTemp');
+    var riskNode = document.getElementById('liveRisk');
+    var levelNode = document.getElementById('liveRiskLevel');
+    if (state.temp != null) {
+      tempNode.innerHTML = Number(state.temp).toFixed(1) + '<small>℃</small>';
+    } else {
+      tempNode.innerHTML = '--<small>℃</small>';
+    }
+    if (state.risk != null) {
+      var label = state.risk >= 65 ? '高风险' : state.risk >= 35 ? '需关注' : '低风险';
+      if (riskNode) riskNode.innerHTML = String(state.risk) + '<span class="mini-level" id="liveRiskLevel">' + label + '</span>';
+      if (levelNode) levelNode.textContent = label;
+    } else {
+      if (riskNode) riskNode.innerHTML = '--<span class="mini-level">演示数据</span>';
+    }
+  }
+
+  /* ---------- 事件绑定 ---------- */
+  el.input.addEventListener('input', function () {
+    updateCharCount();
+    resizeInput();
+    updateSendBtn();
+  });
+  el.input.addEventListener('keydown', function (event) {
+    if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
+      event.preventDefault();
+      if (!state.busy && el.input.value.trim()) sendQuestion();
+    }
+  });
+  el.sendBtn.addEventListener('click', function () { sendQuestion(); });
+  Array.prototype.forEach.call(el.presetButtons, function (btn) {
+    btn.addEventListener('click', function () {
+      if (state.busy) {
+        toast('info', '茶苗正在思考', '请等这一条回答完成，再选择其他问题。');
+        return;
+      }
+      sendQuestion(btn.getAttribute('data-question') || btn.querySelector('strong').textContent);
+    });
+  });
+  document.getElementById('clearChat').addEventListener('click', clearChat);
+
+  /* ---------- 初始化 ---------- */
+  addWelcomeMessage();
+  updateCharCount();
+  resizeInput();
+  updateSendBtn();
+  setServiceState();
+  setMascot('idle');
+  loadWeatherContext();
+})();
+</script>
+</body>
+</html>
